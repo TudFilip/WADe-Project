@@ -34,6 +34,7 @@ module.exports = {
         'no-unsafe-finally': 'off',
         'no-cond-assign': 'off',
         'react/prop-types': 'off',
+        '@typescript-eslint/no-explicit-any': 'off',
     },
     settings: {
         react: {
