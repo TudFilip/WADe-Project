@@ -9,21 +9,19 @@ import PromptInput from '../../ui-helpers/prompt-input/PromptInput';
 import './MainPage.css';
 
 const MainPage = () => {
-    // Track the available GraphQL endpoints (for demonstration)
     const graphqlEndpoints = ['GitHub GraphQL API', 'Other GraphQL API'];
 
-    // Selected GraphQL endpoint from dropdown
     const [selectedGraphQL, setSelectedGraphQL] = useState(graphqlEndpoints[0]);
 
-    // Conversation state: an array of conversation objects
     const [conversations, setConversations] = useState([
         { id: 1, title: 'Conversation 1', messages: [] },
     ]);
 
-    // Active conversation id
     const [activeConversationId, setActiveConversationId] = useState(1);
 
-    // Handler to create a new conversation
+    // For mobile: toggle sidebar visibility. On desktop (>=768px) show by default.
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
+
     const createNewConversation = () => {
         const newId = conversations.length ? Math.max(...conversations.map((c) => c.id)) + 1 : 1;
         const newConversation = { id: newId, title: `Conversation ${newId}`, messages: [] };
@@ -59,12 +57,14 @@ const MainPage = () => {
 
     return (
         <div className="main-container">
-            <Sidebar
-                conversations={conversations}
-                activeConversationId={activeConversationId}
-                onSelectConversation={setActiveConversationId}
-                onNewConversation={createNewConversation}
-            />
+            {isSidebarOpen && (
+                <Sidebar
+                    conversations={conversations}
+                    activeConversationId={activeConversationId}
+                    onSelectConversation={setActiveConversationId}
+                    onNewConversation={createNewConversation}
+                />
+            )}
 
             <div className="chat-container">
                 <ChatArea
@@ -72,6 +72,7 @@ const MainPage = () => {
                     endpoints={graphqlEndpoints}
                     onSelectEndpoint={setSelectedGraphQL}
                     messages={activeConversation ? activeConversation.messages : []}
+                    onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
                 />
 
                 <PromptInput onSend={sendPrompt} />

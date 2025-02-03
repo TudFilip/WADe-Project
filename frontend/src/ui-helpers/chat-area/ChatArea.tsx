@@ -1,9 +1,12 @@
 import './ChatArea.css';
 
-const ChatArea = ({ selectedGraphQL, endpoints, onSelectEndpoint, messages }) => {
+const ChatArea = ({ selectedGraphQL, endpoints, onSelectEndpoint, messages, onToggleSidebar }) => {
     return (
         <>
             <div className="chat-header">
+                <button className="toggle-sidebar" onClick={onToggleSidebar}>
+                    ☰
+                </button>
                 <select
                     value={selectedGraphQL}
                     onChange={(e) => onSelectEndpoint(e.target.value)}

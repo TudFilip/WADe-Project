@@ -3,6 +3,15 @@
     border-bottom: 1px solid #555;
 }
 
+.toggle-sidebar {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-right: 1rem;
+}
+
 .graphql-dropdown {
     padding: 0.5rem;
     border-radius: 4px;
@@ -30,4 +39,23 @@
 .chat-message.bot {
     background-color: #343541;
     align-self: flex-start;
+}
+
+@media (min-width: 768px) {
+    .toggle-sidebar {
+        display: none;
+    }
+}
+
+/* Mobile adjustments: keep layout in row so sidebar remains on the left */
+@media (max-width: 767px) {
+    /* You might choose to overlay the sidebar on mobile.
+       For example, if the sidebar is open, you could set its position to fixed.
+       Here we keep it simple and let it flow in the document. */
+    .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+    }
 }

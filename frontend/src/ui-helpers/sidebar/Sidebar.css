@@ -5,6 +5,7 @@
     padding: 1rem;
     display: flex;
     flex-direction: column;
+    z-index: 2;
 }
 
 .new-conversation-button {
@@ -36,4 +37,24 @@
 
 .conversation-item.active {
     background-color: #10a37f;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 0.5rem;
+    }
+
+    .conversation-list {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .conversation-item {
+        margin-right: 1rem;
+        margin-bottom: 0;
+    }
 }
