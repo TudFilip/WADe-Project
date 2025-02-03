@@ -1,0 +1,33 @@
+.chat-header {
+    padding: 1rem;
+    border-bottom: 1px solid #555;
+}
+
+.graphql-dropdown {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: none;
+}
+
+.chat-window {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.chat-message {
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    max-width: 70%;
+}
+
+.chat-message.user {
+    background-color: #10a37f;
+    align-self: flex-end;
+}
+
+.chat-message.bot {
+    background-color: #343541;
+    align-self: flex-start;
+}
