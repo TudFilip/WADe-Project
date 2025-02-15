@@ -1,0 +1,47 @@
+@prefix github: <http://example.com/github#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# Repository entity
+github:Repository a rdfs:Class ;
+                  rdfs:label "Repository" .
+
+# User entity
+github:User a rdfs:Class ;
+            rdfs:label "User" .
+
+# Issue entity
+github:Issue a rdfs:Class ;
+             rdfs:label "Issue" .
+
+# Pull Request entity
+github:PullRequest a rdfs:Class ;
+                   rdfs:label "Pull Request" .
+
+# Relationships
+github:hasOwner a rdf:Property ;
+                rdfs:domain github:Repository ;
+                rdfs:range github:User ;
+                rdfs:label "Owned by User" .
+
+github:assignedTo a rdf:Property ;
+                  rdfs:domain github:Issue ;
+                  rdfs:range github:User ;
+                  rdfs:label "Assigned To User" .
+
+github:hasPullRequest a rdf:Property ;
+                      rdfs:domain github:Repository ;
+                      rdfs:range github:PullRequest ;
+                      rdfs:label "Has Pull Request" .
+
+# Properties
+github:createdAt a rdf:Property ;
+                 rdfs:domain github:Repository ;
+                 rdfs:range xsd:dateTime ;
+                 rdfs:label "Creation Date" .
+
+github:stars a rdf:Property ;
+             rdfs:domain github:Repository ;
+             rdfs:range xsd:integer ;
+             rdfs:label "Number of Stars" .

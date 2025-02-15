@@ -1,0 +1,25 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix github: <http://example.org/github#> .
+
+# Definim ontologia GitHub
+<http://example.org/github> rdf:type owl:Ontology .
+
+# Clasele principale
+github:User rdf:type owl:Class .
+github:Repository rdf:type owl:Class .
+github:Issue rdf:type owl:Class .
+
+# Proprietăți
+github:ownsRepo rdf:type owl:ObjectProperty ;
+    rdfs:domain github:User ;
+    rdfs:range github:Repository .
+
+github:hasIssue rdf:type owl:ObjectProperty ;
+    rdfs:domain github:Repository ;
+    rdfs:range github:Issue .
+
+github:stargazerCount rdf:type owl:DatatypeProperty ;
+    rdfs:domain github:Repository ;
+    rdfs:range xsd:integer .

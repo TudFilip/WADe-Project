@@ -47,11 +47,7 @@
     }
 }
 
-/* Mobile adjustments: keep layout in row so sidebar remains on the left */
 @media (max-width: 767px) {
-    /* You might choose to overlay the sidebar on mobile.
-       For example, if the sidebar is open, you could set its position to fixed.
-       Here we keep it simple and let it flow in the document. */
     .sidebar {
         position: absolute;
         top: 0;

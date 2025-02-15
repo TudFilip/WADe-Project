@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import AppService from '../../services/AppService';
 
 // Components
 import Sidebar from '../../ui-helpers/sidebar/Sidebar';
@@ -19,7 +20,6 @@ const MainPage = () => {
 
     const [activeConversationId, setActiveConversationId] = useState(1);
 
-    // For mobile: toggle sidebar visibility. On desktop (>=768px) show by default.
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
 
     const createNewConversation = () => {
@@ -29,11 +29,9 @@ const MainPage = () => {
         setActiveConversationId(newId);
     };
 
-    // Handler to send a prompt (simulate server call)
     const sendPrompt = async (promptText) => {
         if (!promptText.trim()) return;
-        // Simulate a server response. In a real app, call your backend API here,
-        // passing the prompt and the selectedGraphQL value.
+        await AppService.sendPrompt(promptText);
         const simulatedResponse = `Response from ${selectedGraphQL} to: "${promptText}"`;
 
         setConversations((prev) =>
@@ -52,7 +50,6 @@ const MainPage = () => {
         );
     };
 
-    // Find the active conversation (for display)
     const activeConversation = conversations.find((c) => c.id === activeConversationId);
 
     return (
