@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: GaitTST
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./app_users.csv:/docker-entrypoint-initdb.d/app_users.csv
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile   # Dockerfile for your Spring Boot app
+    container_name: intellij_app
+    restart: always
+    depends_on:
+      - db
+      - blazegraph
+    environment:
+      SPRING_APPLICATION_NAME: Gait
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/GaitTST
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      spring.liquibase.change-log: classpath:db/changelog/db.changelog-master.xml
+      jwt.secret: CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_STRING_ABC123
+      jwt.expiration-ms: 86400000
+      BLAZEGRAPH_ENDPOINT: http://blazegraph:9999/blazegraph/namespace/kb/sparql
+    ports:
+      - "8080:8080"
+
+  blazegraph:
+    build:
+      context: ./blazegraph   # Folder containing your Blazegraph Dockerfile and jar
+      dockerfile: Dockerfile
+    container_name: blazegraph
+    restart: always
+    ports:
+      - "9999:9999"
+    volumes:
+      - blazegraph_data:/var/lib/blazegraph/data
+
+volumes:
+  pgdata:
+  blazegraph_data:

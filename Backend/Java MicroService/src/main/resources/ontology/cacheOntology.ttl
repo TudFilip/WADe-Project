@@ -1,0 +1,30 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix cache: <http://example.org/cache#> .
+
+# Class for a cached entry.
+cache:CachedEntry a rdfs:Class ;
+                  rdfs:label "Cached Entry" ;
+                  rdfs:comment "A cached entry that stores a user prompt, the corresponding final GraphQL API result, and the creation timestamp." .
+
+# Property for the original user prompt.
+cache:originalPrompt a rdf:Property ;
+                     rdfs:label "original prompt" ;
+                     rdfs:comment "The original user prompt." ;
+                     rdfs:domain cache:CachedEntry ;
+                     rdfs:range xsd:string .
+
+# Property for the final GraphQL API result.
+cache:hasGraphQLResult a rdf:Property ;
+                       rdfs:label "has GraphQL result" ;
+                       rdfs:comment "The final GraphQL API response corresponding to the user prompt." ;
+                       rdfs:domain cache:CachedEntry ;
+                       rdfs:range xsd:string .
+
+# Property for the creation timestamp.
+cache:createdAt a rdf:Property ;
+                rdfs:label "created at" ;
+                rdfs:comment "The timestamp when the cache entry was created." ;
+                rdfs:domain cache:CachedEntry ;
+                rdfs:range xsd:dateTime .
