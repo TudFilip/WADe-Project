@@ -12,71 +12,6 @@ openai.api_key = os.environ.get("OPENAI_API_KEY")
 app = Flask(__name__)
 
 
-@app.route('/parse/with-known-api', methods=['POST'])
-def parse_prompt_with_known_api():
-    data = request.get_json()
-    user_prompt = data.get("prompt")
-    desired_api = data.get("api")
-
-    if not user_prompt:
-        return jsonify({"error": "Missing 'prompt' in request"}), 400
-
-    if not desired_api:
-        return jsonify({"error": "Missing 'api' in request"}), 400
-
-    # Define the system instruction
-    system_message = (
-        "You are an NLP parser. When given a natural language prompt for querying an API, "
-        "extract the following keys into valid JSON with no additional text:\n\n"
-        "JSON FORMAT: \"\"\"\n"
-        "{\n"
-        "  \"action\": \"QUERY\",\n"
-        "  \"target\": \"user\",\n"
-        "  \"identifier\": \"<identifier>\",\n"
-        "  \"subEntity\": \"<subEntity>\",\n"
-        "  \"limit\": <limit>,\n"
-        "  \"constraints\": [\"<constraint1>\", ...],\n"
-        "  \"fields\": [\"<field1>\", ...],\n"
-        "  \"api\": \"<api>\"\n"
-        "}\n"
-        "\"\"\"\n\n"
-        "Make sure the output is valid JSON. The JSON will be used to create a SPARQL query over and RDF file. "
-        f"The RDF file contains the structure of a public GrapQL API. The desired API by the user from {desired_api}. "
-        "Each key of that JSON should be related to the desired api."
-    )
-
-    # Combine with the user prompt in the conversation
-    messages = [
-        {"role": "system", "content": system_message},
-        {"role": "user", "content": f"Extract the JSON structure from this prompt: '{user_prompt}'"}
-    ]
-
-    try:
-        # Call OpenAI's Chat API (using gpt-4 or gpt-3.5-turbo, as available)
-        response = client.chat.completions.create(
-            model="gpt-4o-2024-08-06",
-            messages=messages,
-            response_format={"type": "json_object"},
-            temperature=0
-        )
-    except Exception as e:
-        return jsonify({"error": "OpenAI API call failed", "details": str(e)}), 500
-
-    answer = response.choices[0].message.content.strip()
-
-    try:
-        json_response = json.loads(answer)
-    except Exception as e:
-        return jsonify({
-            "error": "Failed to parse JSON from OpenAI response",
-            "details": str(e),
-            "raw_response": answer
-        }), 500
-
-    # Return the parsed JSON
-    return jsonify(json_response)
-
-
 def load_ontology(file_path):
     try:
         with open(file_path, 'r') as f:
@@ -99,8 +34,10 @@ def parse_prompt_with_api_detection():
 
     system_message_api_detection = (
         "You are a helper for my NLP parser. The parser is given a natural language prompt to query a public "
-        "GraphQL API. Your job is to detect which API the user is referring to. The prompt will be in English or Romanian. "
-        "Search for keywords or sequences of words that might be useful to you. Currently, we support only a list of 3 public "
+        "GraphQL API. Your job is to detect which API the user is referring to. The prompt will be in English or "
+        "Romanian."
+        "Search for keywords or sequences of words that might be useful to you. Currently, we support only a list of "
+        "3 public"
         "GraphQL APIs:\n\n"
         "THE LIST:\n"
         "GITHUB PUBLIC GRAPHQL API\n"
@@ -156,8 +93,10 @@ def parse_prompt_with_api_detection():
         "}\n"
         "\"\"\"\n\n"
         "Make sure the output is valid JSON. The JSON will be used to create a SPARQL query over an RDF file. "
-        f"The desired API by the user is {detected_api}. Each key should relate to that API. If no limit is specified, select all.\n"
-        "Below is the GitHub ontology and Countries ontology that defines API structure mappings. Use it as context to improve your detection:\n\n"
+        f"The desired API by the user is {detected_api}. Each key should relate to that API. If no limit is "
+        f"specified, select all.\n"
+        "Below is the GitHub ontology and Countries ontology that defines API structure mappings. Use it as context "
+        "to improve your detection:\n\n"
         f"{github_ontology}"
         f"{countries_ontology}"
 

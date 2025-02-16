@@ -22,20 +22,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 @RequiredArgsConstructor
 public class ClientService {
+
+    // Optionally you can use SLF4J logs:
+    // private static final Logger LOG = LoggerFactory.getLogger(ClientService.class);
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final BlazegraphCacheService cacheService;
     private final EndpointCallService endpointCallService;
 
+    // NLP and Blazegraph endpoints
     @Value("${nlp.endpoint:http://localhost:5000/parse/with-api-detection}")
     private String nlpEndpoint;
 
     @Value("${blazegraph.endpoint:http://localhost:9999/blazegraph/namespace/kb/sparql}")
     private String blazegraphEndpoint;
+
+    // GitHub token from environment variable (or fallback empty)
+    @Value("${GITHUB_TOKEN:}")
+    private String githubToken;
+
+    private static final Logger logger = LoggerFactory.getLogger(ClientService.class);
 
     /**
      * Load two TTL files at startup (GitHub + Countries) into Blazegraph.
@@ -46,11 +59,15 @@ public class ClientService {
         loadTtlToBlazegraph("ontology/graphQLOntology_countries.ttl");
     }
 
+    /**
+     * Helper that reads a TTL file from src/main/resources/ontology/
+     * and POSTs it to Blazegraph's default graph.
+     */
     private void loadTtlToBlazegraph(String ttlFileName) {
         try {
             ClassPathResource ttlResource = new ClassPathResource(ttlFileName);
             if (!ttlResource.exists()) {
-                System.err.println("Ontology file not found: " + ttlFileName);
+                logger.error("Ontology file not found: {}", ttlFileName);
                 return;
             }
 
@@ -65,34 +82,45 @@ public class ClientService {
             ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                System.out.println("Loaded " + ttlFileName + " into Blazegraph successfully.");
+                logger.info("Loaded {} into Blazegraph successfully.", ttlFileName);
             } else {
-                System.err.println("Failed to load " + ttlFileName + ". HTTP status: " + response.getStatusCode());
+                logger.error("Failed to load {}. HTTP status: {}", ttlFileName, response.getStatusCode());
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Could not load TTL " + ttlFileName + ": " + e.getMessage());
+            logger.error("Could not load TTL {}: {}", ttlFileName, e.getMessage());
         }
     }
 
+    /**
+     * Main entry point: processes a client prompt and returns the final GraphQL API result.
+     * 1) Checks the cache
+     * 2) Calls the NLP
+     * 3) Processes the NLP response
+     */
     public String handleClientPrompt(String prompt, UserEntity user) {
+        // 1) Check for a valid cached entry
         try {
             BlazegraphCacheService.CachedEntry cached = cacheService.fetchCacheEntry(prompt);
             if (cached != null) {
-                System.out.println("Cache hit! Cached GraphQL Result: " + cached.graphQLResult);
+                logger.info("Cache hit! Cached GraphQL Result: {}", cached.graphQLResult);
                 return cached.graphQLResult;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Cache lookup error: {}", e.getMessage());
         }
 
+        // 2) No cache found: call the NLP endpoint with the prompt
         NLPResponse nlpResponse = callNlpService(prompt);
         endpointCallService.incrementCallCount(user, Api.valueOf(nlpResponse.getApi()));
-        System.out.println("Received NLP response: " + nlpResponse);
+        logger.info("Received NLP response: {}", nlpResponse);
 
+        // 3) Process the NLP response -> build GraphQL -> call external API -> cache the result
         return processNlpResponse(nlpResponse, prompt);
     }
 
+    /**
+     * Calls the external Python NLP endpoint to parse the prompt.
+     */
     public NLPResponse callNlpService(String prompt) {
         try {
             Map<String, Object> payload = new HashMap<>();
@@ -102,8 +130,7 @@ public class ClientService {
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
-            ResponseEntity<String> response =
-                    restTemplate.postForEntity(nlpEndpoint, entity, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(nlpEndpoint, entity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 return objectMapper.readValue(response.getBody(), NLPResponse.class);
@@ -116,6 +143,13 @@ public class ClientService {
         }
     }
 
+    /**
+     * Processes the NLP response:
+     *  - Retrieves mapping data from the ontology
+     *  - Builds the GraphQL query
+     *  - Invokes the external GraphQL API
+     *  - Caches and returns the final result
+     */
     public String processNlpResponse(NLPResponse response, String originalPrompt) {
         try {
             OntologyMapping mapping = fetchOntologyMappings(response);
@@ -124,7 +158,7 @@ public class ClientService {
             System.out.println("Generated GraphQL query:\n" + graphQLQuery);
 
             String externalResult = queryExternalGraphQLApi(graphQLQuery, response.getApi());
-            System.out.println("GraphQL API result:\n" + externalResult);
+            logger.info("GraphQL API result:\n{}", externalResult);
 
             cacheService.saveCacheEntry(originalPrompt, externalResult);
             return externalResult;
@@ -134,6 +168,10 @@ public class ClientService {
         }
     }
 
+    /**
+     * Builds the GraphQL query based on the NLP response + retrieved mappings.
+     * Has special logic for GitHub "user" vs "repositories/issues", etc.
+     */
     public String buildGraphQLQuery(NLPResponse response, OntologyMapping map) {
         String api = (response.getApi() != null) ? response.getApi().toUpperCase() : "";
         int limit = (response.getLimit() > 0) ? response.getLimit() : 100;
@@ -144,80 +182,117 @@ public class ClientService {
                 : List.of("name");
 
         if ("GITHUB".equals(api)) {
-            String userField = map.userField;          // "user"
-            String userIdentifierArg = map.userIdentifierArg; // "login"
-            String targetField = map.targetField;      // might also be "user" or "repositories", etc.
+            // Distinguish "user" as a direct fields query vs "repositories/issues" with pagination
+            String userField = map.userField;            // e.g. "user"
+            String userIdentifierArg = map.userIdentifierArg; // e.g. "login"
+            String targetField = map.targetField;        // e.g. "repositories" or possibly "user"
 
-            // If the target is "user", skip the second call and query fields directly.
             if ("user".equalsIgnoreCase(response.getTarget())) {
-                // We want: user(login: "TudFilip") { location, name, etc. }
-                // No "first: ..." or "nodes" in this scenario.
-
-                StringBuilder sb = new StringBuilder();
-                sb.append("query {\n");
-                sb.append("  ").append(userField)             // => "user"
-                        .append("(").append(userIdentifierArg)      // => "login"
-                        .append(": \"").append(safeIdentifier).append("\") {\n");
-
-                // Direct fields
-                for (String f : fields) {
-                    sb.append("    ").append(sanitizeSparqlString(f)).append("\n");
-                }
-                sb.append("  }\n");
-                sb.append("}\n");
-                return sb.toString();
+                // Single-level: user(login: "X") { location, name, ... }
+                return buildGitHubUserFieldsQuery(userField, userIdentifierArg, safeIdentifier, fields);
+            } else {
+                // Multi-level: user(login: "X") { repositories(...) { nodes {...} } }
+                return buildGitHubNestedQuery(userField, userIdentifierArg, targetField, limit, fields, response, map, safeIdentifier);
             }
-            else {
-                // The existing repositories/issues approach
-                StringBuilder sb = new StringBuilder();
-                sb.append("query {\n");
-                sb.append("  ").append(userField)
-                        .append("(").append(userIdentifierArg).append(": \"")
-                        .append(safeIdentifier).append("\") {\n");
 
-                sb.append("    ").append(targetField).append("(");
-
-                if (response.getConstraints() != null && !response.getConstraints().isEmpty()) {
-                    sb.append(map.constraintArgumentField)
-                            .append(": { field: ")
-                            .append(map.constraintOrderingField)
-                            .append(", direction: ")
-                            .append(map.constraintDirection)
-                            .append("}, ");
-                }
-                sb.append("first: ").append(limit).append(") {\n");
-                sb.append("      nodes {\n");
-                for (String f : fields) {
-                    sb.append("        ").append(sanitizeSparqlString(f)).append("\n");
-                }
-                sb.append("      }\n");
-                sb.append("    }\n");
-                sb.append("  }\n");
-                sb.append("}\n");
-                return sb.toString();
-            }
         } else if ("COUNTRIES".equals(api)) {
-            // e.g. query { continent(code: "AF") { name } }
-            StringBuilder sb = new StringBuilder();
-            sb.append("query {\n");
-            sb.append("  ").append(map.targetField)
-                    .append("(").append(map.userIdentifierArg)
-                    .append(": \"").append(safeIdentifier)
-                    .append("\") {\n");
-
-            for (String f : fields) {
-                sb.append("    ").append(sanitizeSparqlString(f)).append("\n");
-            }
-            sb.append("  }\n");
-            sb.append("}\n");
-            return sb.toString();
+            // e.g.: query { continent(code: "AF") { name } }
+            return buildCountriesQuery(map.targetField, map.userIdentifierArg, safeIdentifier, fields);
 
         } else {
-            System.err.println("Unknown API: " + api);
+            logger.error("Unknown API: {}", api);
             return "";
         }
     }
 
+    /**
+     * Helper for GitHub single-level user fields query
+     */
+    private String buildGitHubUserFieldsQuery(String userField,
+                                              String userIdentifierArg,
+                                              String safeIdentifier,
+                                              List<String> fields) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("query {\n");
+        sb.append("  ").append(userField) // => "user"
+                .append("(").append(userIdentifierArg) // => "login"
+                .append(": \"").append(safeIdentifier).append("\") {\n");
+
+        for (String f : fields) {
+            sb.append("    ").append(sanitizeSparqlString(f)).append("\n");
+        }
+        sb.append("  }\n");
+        sb.append("}\n");
+        return sb.toString();
+    }
+
+    /**
+     * Helper for GitHub multi-level queries (repositories, issues, etc.)
+     */
+    private String buildGitHubNestedQuery(String userField,
+                                          String userIdentifierArg,
+                                          String targetField,
+                                          int limit,
+                                          List<String> fields,
+                                          NLPResponse response,
+                                          OntologyMapping map,
+                                          String safeIdentifier) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("query {\n");
+        sb.append("  ").append(userField)
+                .append("(").append(userIdentifierArg).append(": \"")
+                .append(safeIdentifier).append("\") {\n");
+
+        sb.append("    ").append(targetField).append("(");
+
+        if (response.getConstraints() != null && !response.getConstraints().isEmpty()) {
+            sb.append(map.constraintArgumentField) // e.g. orderBy
+                    .append(": { field: ")
+                    .append(map.constraintOrderingField)
+                    .append(", direction: ")
+                    .append(map.constraintDirection)
+                    .append("}, ");
+        }
+        sb.append("first: ").append(limit).append(") {\n");
+        sb.append("      nodes {\n");
+        for (String f : fields) {
+            sb.append("        ").append(sanitizeSparqlString(f)).append("\n");
+        }
+        sb.append("      }\n");
+        sb.append("    }\n");
+        sb.append("  }\n");
+        sb.append("}\n");
+        return sb.toString();
+    }
+
+    /**
+     * Helper for Countries queries (one-level) e.g. "continent(code: "AF") { name }"
+     */
+    private String buildCountriesQuery(String targetField,
+                                       String userIdentifierArg,
+                                       String safeIdentifier,
+                                       List<String> fields) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("query {\n");
+        sb.append("  ").append(targetField)
+                .append("(").append(userIdentifierArg)
+                .append(": \"").append(safeIdentifier)
+                .append("\") {\n");
+
+        for (String f : fields) {
+            sb.append("    ").append(sanitizeSparqlString(f)).append("\n");
+        }
+        sb.append("  }\n");
+        sb.append("}\n");
+        return sb.toString();
+    }
+
+    /**
+     * Executes the external GraphQL API call and returns the response.
+     */
     public String queryExternalGraphQLApi(String graphQLQuery, String api) {
         String publicEndpoint;
         HttpHeaders headers = new HttpHeaders();
@@ -225,11 +300,15 @@ public class ClientService {
 
         if ("github".equalsIgnoreCase(api)) {
             publicEndpoint = "https://api.github.com/graphql";
-            headers.set("Authorization", "Bearer token");
+            // Use your environment-based GitHub token
+            if (githubToken == null || githubToken.isBlank()) {
+                logger.warn("GITHUB_TOKEN not set or empty!");
+            }
+            headers.set("Authorization", "Bearer " + githubToken);
         } else if ("countries".equalsIgnoreCase(api)) {
             publicEndpoint = "https://countries.trevorblades.com/";
         } else {
-            System.err.println("Unknown API: " + api);
+            logger.error("Unknown API: {}", api);
             return "";
         }
 
@@ -242,11 +321,14 @@ public class ClientService {
         if (response.getStatusCode().is2xxSuccessful()) {
             return response.getBody();
         } else {
-            System.err.println("Error querying GraphQL API (" + api + "): " + response.getStatusCode());
+            logger.error("Error querying GraphQL API ({}): {}", api, response.getStatusCode());
             return "";
         }
     }
 
+    /**
+     * Builds a SPARQL query to fetch relevant mappings, depending on the API (GitHub vs. Countries).
+     */
     private String buildSparqlQuery(NLPResponse response) {
         String api = (response.getApi() != null) ? response.getApi().toUpperCase() : "";
         String targetLabel = (response.getTarget() != null)
@@ -305,13 +387,16 @@ public class ClientService {
         return null;
     }
 
+    /**
+     * Runs the SPARQL query against Blazegraph to retrieve the ontology mappings needed.
+     */
     private OntologyMapping fetchOntologyMappings(NLPResponse response) {
         String sparql = buildSparqlQuery(response);
         if (sparql == null) {
-            System.err.println("No SPARQL query built for API: " + response.getApi());
+            logger.error("No SPARQL query built for API: {}", response.getApi());
             return new OntologyMapping();
         }
-        System.out.println("SPARQL Query:\n" + sparql);
+        logger.info("SPARQL Query:\n{}", sparql);
 
         Query query = QueryFactory.create(sparql);
         try (QueryExecution qexec = QueryExecutionHTTP.newBuilder()
@@ -343,21 +428,35 @@ public class ClientService {
         }
     }
 
+    /**
+     * Safely extracts a literal string from a SPARQL query solution.
+     */
     private String getLiteralString(QuerySolution sol, String varName) {
         if (!sol.contains(varName)) return null;
         return sol.get(varName).isLiteral() ? sol.getLiteral(varName).getString() : null;
     }
 
+    /**
+     * Simple container for the ontology mappings retrieved via SPARQL.
+     */
     private static class OntologyMapping {
-        String userField;
-        String userIdentifierArg;
-        String targetField;
-        String targetGraphQLType;
-        String constraintArgumentField;
-        String constraintOrderingField;
-        String constraintDirection;
+        // For GitHub
+        String userField;             // e.g. "user"
+        String userIdentifierArg;     // e.g. "login"
+
+        // For "repositories", "issues", "country", "continent", etc.
+        String targetField;           // e.g. "repositories" or "continent"
+        String targetGraphQLType;     // e.g. "Continent"
+
+        // For constraints like "most starred"
+        String constraintArgumentField;  // e.g. "orderBy"
+        String constraintOrderingField;  // e.g. "STARGAZERS"
+        String constraintDirection;      // e.g. "DESC"
     }
 
+    /**
+     * Sanitizes user-provided strings so they don't break SPARQL or GraphQL queries.
+     */
     private String sanitizeSparqlString(String input) {
         if (input == null) return "";
         return input
