@@ -95,6 +95,7 @@ def parse_prompt_with_api_detection():
 
     # Load the ontology from a file (adjust the path as needed).
     github_ontology = load_ontology("./graphQLOntology_github.ttl")
+    countries_ontology = load_ontology("./graphQLOntology_countries.ttl")
 
     system_message_api_detection = (
         "You are a helper for my NLP parser. The parser is given a natural language prompt to query a public "
@@ -156,8 +157,9 @@ def parse_prompt_with_api_detection():
         "\"\"\"\n\n"
         "Make sure the output is valid JSON. The JSON will be used to create a SPARQL query over an RDF file. "
         f"The desired API by the user is {detected_api}. Each key should relate to that API. If no limit is specified, select all.\n"
-        "Below is the GitHub ontology that defines API structure mappings. Use it as context to improve your detection:\n\n"
+        "Below is the GitHub ontology and Countries ontology that defines API structure mappings. Use it as context to improve your detection:\n\n"
         f"{github_ontology}"
+        f"{countries_ontology}"
 
     )
 
