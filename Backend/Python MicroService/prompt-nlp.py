@@ -77,6 +77,14 @@ def parse_prompt_with_known_api():
     return jsonify(json_response)
 
 
+def load_ontology(file_path):
+    try:
+        with open(file_path, 'r') as f:
+            return f.read()
+    except Exception as e:
+        return f"Error loading ontology: {str(e)}"
+
+
 @app.route('/parse/with-api-detection', methods=['POST'])
 def parse_prompt_with_api_detection():
     data = request.get_json()
@@ -85,12 +93,15 @@ def parse_prompt_with_api_detection():
     if not user_prompt:
         return jsonify({"error": "Missing 'prompt' in request"}), 400
 
+    # Load the ontology from a file (adjust the path as needed).
+    github_ontology = load_ontology("./graphQLOntology_github.ttl")
+
     system_message_api_detection = (
-        "You are a helper for my NLP parser. The parser is given a natural language prompt for query a public "
-        "GraphQL API. You job is to detect which api is user refer to. The prompt will be in English or in "
-        "Romanian. Search for key words or other sequence of words that my be usefully to you. Currently, we support "
-        "only a list of 3 (three) public GraphQL APIs:\n\n"
-        "THE LIST: \n\n"
+        "You are a helper for my NLP parser. The parser is given a natural language prompt to query a public "
+        "GraphQL API. Your job is to detect which API the user is referring to. The prompt will be in English or Romanian. "
+        "Search for keywords or sequences of words that might be useful to you. Currently, we support only a list of 3 public "
+        "GraphQL APIs:\n\n"
+        "THE LIST:\n"
         "GITHUB PUBLIC GRAPHQL API\n"
         "COUNTRIES PUBLIC GRAPHQL API\n"
         "SPACEX PUBLIC GRAPHQL API\n\n"
@@ -100,11 +111,11 @@ def parse_prompt_with_api_detection():
         "   \"api\": \"<detected api>\"\n"
         "}\n"
         "\"\"\"\n\n"
-        "The \'api\' property should be a capitalized string based on the detected api. If you detect it is related "
-        "to GITHUB PUBLIC GRAPHQL API, the detected api is \'GITHUB\'. If you detect it is related to COUNTRIES "
-        "PUBLIC GRAPHQL API, the detected api is \'COUNTRIES\'. If you detect it is related to SPACEX PUBLIC GRAPHQL "
-        "API, the detected api is \'SPACEX\'. Again, make sure the output is just a valid JSON."
+        "The 'api' property should be a capitalized string based on the detected API. For example, if related to "
+        "GITHUB PUBLIC GRAPHQL API, output 'GITHUB'.\n\n"
+        "Again, make sure the output is just a valid JSON."
     )
+
     messages_for_api_detection = [
         {"role": "system", "content": system_message_api_detection},
         {"role": "user", "content": f"Detect the API from this user prompt: '{user_prompt}'"}
@@ -123,8 +134,8 @@ def parse_prompt_with_api_detection():
     detected_api_json = detected_api_response.choices[0].message.content.strip()
 
     try:
-        data = json.loads(detected_api_json)
-        detected_api = data['api']
+        detected_data = json.loads(detected_api_json)
+        detected_api = detected_data['api']
     except json.JSONDecodeError as e:
         return jsonify({"error": "Invalid OpenAI detected api JSON", "details": str(e)}), 500
 
@@ -134,7 +145,7 @@ def parse_prompt_with_api_detection():
         "JSON FORMAT: \"\"\"\n"
         "{\n"
         "  \"action\": \"QUERY\",\n"
-        "  \"target\": \"user\",\n"
+        "  \"target\": \"<target>\",\n"
         "  \"identifier\": \"<identifier>\",\n"
         "  \"subEntity\": \"<subEntity>\",\n"
         "  \"limit\": <limit>,\n"
@@ -143,12 +154,13 @@ def parse_prompt_with_api_detection():
         "  \"api\": \"<api>\"\n"
         "}\n"
         "\"\"\"\n\n"
-        "Make sure the output is valid JSON. The JSON will be used to create a SPARQL query over and RDF file. "
-        f"The RDF file contains the structure of a public GrapQL API. The desired API by the user from {detected_api}. "
-        "Each key of that JSON should be related to the desired api."
+        "Make sure the output is valid JSON. The JSON will be used to create a SPARQL query over an RDF file. "
+        f"The desired API by the user is {detected_api}. Each key should relate to that API. If no limit is specified, select all.\n"
+        "Below is the GitHub ontology that defines API structure mappings. Use it as context to improve your detection:\n\n"
+        f"{github_ontology}"
+
     )
 
-    # Combine with the user prompt in the conversation
     messages = [
         {"role": "system", "content": system_message},
         {"role": "user", "content": f"Extract the JSON structure from this prompt: '{user_prompt}'"}

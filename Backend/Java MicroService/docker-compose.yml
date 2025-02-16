@@ -35,6 +35,7 @@ services:
       jwt.secret: CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_STRING_ABC123
       jwt.expiration-ms: 86400000
       BLAZEGRAPH_ENDPOINT: http://blazegraph:9999/blazegraph/namespace/kb/sparql
+      NLP_ENDPOINT: http://nlp-service:5000/parse/with-api-detection  # If running in Docker, adjust accordingly
     ports:
       - "8080:8080"
 
@@ -48,6 +49,14 @@ services:
       - "9999:9999"
     volumes:
       - blazegraph_data:/var/lib/blazegraph/data
+
+  # Optionally, if your Python NLP endpoint is containerized:
+  nlp-service:
+    image: your-nlp-image   # Replace with your Python NLP service image
+    container_name: nlp-service
+    restart: always
+    ports:
+      - "5000:5000"
 
 volumes:
   pgdata:

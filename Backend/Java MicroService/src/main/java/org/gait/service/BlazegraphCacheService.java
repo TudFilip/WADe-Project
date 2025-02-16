@@ -22,20 +22,22 @@ public class BlazegraphCacheService {
     @Value("${blazegraph.endpoint:http://localhost:9999/blazegraph/namespace/kb/sparql}")
     private String blazegraphEndpoint;
 
+    @Value("${cache.expiration.minutes:10}")
+    private long cacheExpirationMinutes;
+
     // Prefixes for our cache ontology and XSD.
     private static final String PREFIXES = "PREFIX cache: <" + CacheOntology.NS + "> " +
             "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ";
 
     /**
      * Generates a unique URI for a given prompt.
-     * (In production, consider using a cryptographic hash.)
      */
     public String generatePromptURI(String prompt) {
         return "urn:prompt:" + URLEncoder.encode(prompt, StandardCharsets.UTF_8);
     }
 
     /**
-     * Sanitizes the input by escaping double quotes and removing newlines.
+     * Sanitizes input by escaping double quotes and removing newlines.
      */
     private String sanitize(String input) {
         if (input == null) return "";
@@ -49,7 +51,8 @@ public class BlazegraphCacheService {
         String promptURI = generatePromptURI(prompt);
         String safePrompt = sanitize(prompt);
         String safeGraphQLResult = sanitize(graphQLResult);
-        String timestamp = Instant.now().toString();  // ISO-8601
+        String timestamp = Instant.now().toString();  // ISO-8601 format
+
         String updateString = PREFIXES +
                 "INSERT DATA { " +
                 "  <" + promptURI + "> a <" + CacheOntology.CachedEntry + "> ; " +
@@ -64,7 +67,7 @@ public class BlazegraphCacheService {
 
     /**
      * Retrieves the cached entry for the given prompt.
-     * If the entry is older than 10 minutes, it is deleted and null is returned.
+     * If the entry is older than the configured expiration, it is deleted and null is returned.
      */
     public CachedEntry fetchCacheEntry(String prompt) {
         String promptURI = generatePromptURI(prompt);
@@ -86,8 +89,7 @@ public class BlazegraphCacheService {
                 String graphQLResult = sol.getLiteral("graphQLResult").getString();
                 String createdAtStr = sol.getLiteral("createdAt").getString();
                 Instant createdAt = Instant.parse(createdAtStr);
-                // Expire after 10 minutes.
-                if (Duration.between(createdAt, Instant.now()).toMinutes() >= 10) {
+                if (Duration.between(createdAt, Instant.now()).toSeconds() >= 1) {
                     removeCacheEntry(prompt);
                     return null;
                 }
@@ -98,7 +100,7 @@ public class BlazegraphCacheService {
     }
 
     /**
-     * Deletes the cache entry for the given prompt.
+     * Deletes the cached entry for the given prompt.
      */
     public void removeCacheEntry(String prompt) {
         String promptURI = generatePromptURI(prompt);

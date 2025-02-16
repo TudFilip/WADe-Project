@@ -1,0 +1,36 @@
+@prefix ex: <http://example.org/ontology#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# --- Mapping for the "user" target ---
+ex:UserConcept a rdfs:Class ;
+               rdfs:label "user" ;
+               ex:mapsToGraphQLType "User" ;
+               ex:mapsToField "user" ;
+               ex:identifierArgument "login" ;
+               ex:defaultSubEntity "" ;
+               ex:defaultFields "login, name, location, followers" .
+
+# --- Mapping for the "repository" target ---
+ex:RepositoryConcept a rdfs:Class ;
+                     rdfs:label "repository" ;
+                     ex:mapsToGraphQLType "Repository" ;
+                     ex:mapsToField "repository" ;
+                     ex:identifierArgument "id" .
+
+# --- Mapping for the "repositories" concept ---
+ex:RepositoriesConcept a rdfs:Class ;
+                       rdfs:label "repositories" ;
+                       ex:mapsToGraphQLType "Repository" ;
+                       ex:mapsToField "repositories" .
+
+# --- Mapping for the ordering constraint "most starred" ---
+ex:MostStarredConstraint a rdfs:Class ;
+                         rdfs:label "most starred" ;
+                         ex:mapsToArgumentField "orderBy" ;
+                         ex:mapsToOrderingField "STARGAZER_COUNT" ;
+                         ex:defaultDirection "DESC" .
+
+# --- Additional mappings for extra properties ---
+ex:LocationMapping a rdfs:Class ;
+                   rdfs:label "location" ;
+                   ex:mapsToField "location" .
