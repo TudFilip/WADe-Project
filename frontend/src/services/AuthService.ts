@@ -4,7 +4,7 @@ import { Cookies } from 'react-cookie';
 
 class AuthService {
     private static instance: AuthService | null = null;
-    private readonly AUTH_API: string = `${API__BASE_URL}/auth`;
+    private readonly AUTH_API: string = `${API__BASE_URL}/api/auth`;
     private cookies = new Cookies();
 
     constructor() {
