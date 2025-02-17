@@ -15,6 +15,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -92,6 +93,7 @@ public class UserHistoryService {
                 entries.add(new UserHistoryEntry(userId, prompt, createdAt));
             }
         }
+        Collections.reverse(entries);
         return entries;
     }
 
