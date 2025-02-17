@@ -15,6 +15,11 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -44,39 +49,51 @@ public class SecurityConfig {
      * Needed if you want to authenticate user credentials via /login or /auth endpoint.
      */
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
     /**
      * Defines the main HTTP security filter chain for JWT-based auth.
+     * Also enables CORS with default configuration.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http
+                // Enable CORS with custom configuration
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())  // Typically disabled for stateless APIs
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Open all auth endpoints for login and registration:
                         .requestMatchers("/api/auth/**").permitAll()
-
                         // Admin, Tester, Client endpoints require roles
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/tester/**").hasRole("TESTER")
                         .requestMatchers("/client/**").hasRole("CLIENT")
-
                         // Everything else must be authenticated
                         .anyRequest().authenticated()
                 )
-                // (Optional) If you want Basic auth for testing
                 .httpBasic(Customizer.withDefaults())
-
-                // Attach our provider & filter
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * Configures CORS settings.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        // Allow all origins, headers, and methods for development. Adjust in production!
+        configuration.setAllowedOrigins(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
