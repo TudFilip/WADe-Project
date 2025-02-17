@@ -32,7 +32,7 @@ public class ClientController {
         String graphQLResponse = clientService.handleClientPrompt(prompt, user);
 
         // Increment the call count.
-        userHistoryService.saveUserHistory(String.valueOf(user.getId()), prompt);
+        userHistoryService.saveUserHistory(String.valueOf(user.getId()), prompt, graphQLResponse);
 
         // Return the GraphQL result to the caller.
         return graphQLResponse;
