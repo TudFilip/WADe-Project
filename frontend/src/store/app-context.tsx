@@ -1,6 +1,7 @@
 import { createContext, ReactNode, useEffect, useMemo, useState } from 'react';
 import { createTheme, PaletteMode, Theme } from '@mui/material';
 import i18n from '../utils/i18n';
+import { AuthService } from '../services';
 
 type ContextProps = {
     theme: Theme;
@@ -8,6 +9,9 @@ type ContextProps = {
     toggleColorScheme: () => void;
     language: string;
     changeLanguage: (lng: string) => void;
+    isLoggedIn: boolean;
+    setIsLoggedIn: (isLogged: boolean) => void;
+    logoutUser: () => void;
 };
 
 export const AppContext = createContext<ContextProps>({
@@ -16,6 +20,9 @@ export const AppContext = createContext<ContextProps>({
     toggleColorScheme: () => {},
     language: 'ro',
     changeLanguage: (lng: string) => {},
+    isLoggedIn: false,
+    setIsLoggedIn: (isLogged: boolean) => {},
+    logoutUser: () => {},
 });
 
 type AppContextProviderProps = {
@@ -25,6 +32,7 @@ type AppContextProviderProps = {
 export default function AppContextProvider({ children }: AppContextProviderProps) {
     const [mode, setMode] = useState<PaletteMode>('light');
     const [language, setLanguage] = useState<string>('ro');
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('themeMode') as PaletteMode | null;
@@ -65,12 +73,20 @@ export default function AppContextProvider({ children }: AppContextProviderProps
         i18n.changeLanguage(lng);
     };
 
+    const logoutUser = () => {
+        AuthService.logout();
+        setIsLoggedIn(false);
+    };
+
     const value: ContextProps = {
         theme: theme,
         themeMode: mode,
         toggleColorScheme: toggleColorScheme,
         language: language,
         changeLanguage: changeLanguage,
+        isLoggedIn: isLoggedIn,
+        setIsLoggedIn: setIsLoggedIn,
+        logoutUser: logoutUser,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

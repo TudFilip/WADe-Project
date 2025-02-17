@@ -1,4 +1,5 @@
-import React, { useContext } from 'react';
+import { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     AppBar,
     Toolbar,
@@ -8,8 +9,16 @@ import {
     Box,
     Select,
     MenuItem,
+    useMediaQuery,
 } from '@mui/material';
-import { GitHub, Brightness7, Brightness4, Image } from '@mui/icons-material';
+import {
+    GitHub,
+    Brightness7,
+    Brightness4,
+    Menu as MenuIcon,
+    QuestionMark,
+    Logout,
+} from '@mui/icons-material';
 import { AppContext } from '../../store/app-context';
 import { useTranslation } from 'react-i18next';
 
@@ -19,23 +28,52 @@ import logoDark from '../../assets/icons/gait-icon-small-dark.png';
 import romanianFlag from '../../assets/icons/romania.png';
 import englishFlag from '../../assets/icons/united-kingdom.png';
 
-const Header = () => {
-    const { themeMode: mode, toggleColorScheme, language, changeLanguage } = useContext(AppContext);
+interface HeaderProps {
+    toggleSidebar?: () => void;
+}
+
+const Header = ({ toggleSidebar }: HeaderProps) => {
+    const navigate = useNavigate();
+    const {
+        themeMode: mode,
+        toggleColorScheme,
+        language,
+        changeLanguage,
+        isLoggedIn,
+        logoutUser,
+    } = useContext(AppContext);
     const { t } = useTranslation();
 
+    const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
+
+    const handleLogout = () => {
+        logoutUser();
+        navigate('/login', { replace: true });
+    };
+
     return (
-        <AppBar position="sticky" color="transparent" elevation={0}>
+        <AppBar position="sticky" color="secondary" elevation={1}>
             <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                    {isMobile && (
+                        <IconButton color="inherit" onClick={toggleSidebar}>
+                            <MenuIcon />
+                        </IconButton>
+                    )}
                     <img
                         src={mode === 'dark' ? logoDark : logoLight}
                         alt="Project Logo"
-                        style={{ height: '40px' }}
+                        style={{ height: '30px' }}
                     />
-                    <Typography variant="h6" fontWeight={700}>
+                    <Typography
+                        variant="h6"
+                        fontWeight={700}
+                        sx={{ display: !isMobile ? 'block' : 'none' }}
+                    >
                         GAIT
                     </Typography>
                 </Box>
+
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Select
                         value={language}
@@ -97,7 +135,19 @@ const Header = () => {
                         <GitHub />
                     </IconButton>
 
-                    <Button color="inherit">{t('TUTORIAL')}</Button>
+                    {isMobile ? (
+                        <IconButton color="inherit">
+                            <QuestionMark />
+                        </IconButton>
+                    ) : (
+                        <Button color="inherit">{t('TUTORIAL')}</Button>
+                    )}
+
+                    {isLoggedIn && (
+                        <IconButton color="inherit" onClick={handleLogout}>
+                            <Logout />
+                        </IconButton>
+                    )}
                 </Box>
             </Toolbar>
         </AppBar>

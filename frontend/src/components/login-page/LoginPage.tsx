@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Typography, Button, Container, Paper, TextField, Link, FormControl } from '@mui/material';
+import { useContext, useState } from 'react';
+import { Typography, Button, Container, Paper, TextField, Link } from '@mui/material';
 import { styled, keyframes } from '@mui/system';
 import Header from '../../ui-helpers/header/Header';
 import { useTranslation } from 'react-i18next';
 import { AuthService } from '../../services';
 import { useNavigate } from 'react-router-dom';
+import { AppContext } from '../../store/app-context';
 
 const gradientAnimation = keyframes`
   0% { background-position: 0% 50%; }
@@ -27,6 +28,7 @@ const DynamicBackground = styled('div')(({ theme }) => ({
 const LoginPage = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const { setIsLoggedIn } = useContext(AppContext);
 
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
@@ -66,6 +68,7 @@ const LoginPage = () => {
                 const errorMessage = t('FAILEDLOGIN');
                 setLoginError(errorMessage);
             } else {
+                setIsLoggedIn(true);
                 return navigate('/home');
             }
         }
