@@ -38,8 +38,9 @@ public class ClientController {
         return graphQLResponse;
     }
 
-    @GetMapping("/{userId}")
-    public List<UserHistoryService.UserHistoryEntry> getUserHistory(@PathVariable String userId) {
-        return userHistoryService.getHistoryForUser(userId);
+    @GetMapping("")
+    public List<UserHistoryService.UserHistoryEntry> getUserHistory(Authentication authentication) {
+        UserEntity user = userService.getUserEntity(authentication);
+        return userHistoryService.getHistoryForUser(user.getId().toString());
     }
 }
