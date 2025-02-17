@@ -76,10 +76,8 @@ const LoginPage = () => {
 
     return (
         <DynamicBackground>
-            {/* Header */}
             <Header />
 
-            {/* Centered Login Form */}
             <Container
                 component="main"
                 maxWidth="xs"

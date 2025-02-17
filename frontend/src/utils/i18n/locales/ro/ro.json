@@ -13,5 +13,17 @@
     "PASSWORDMUSTMATCH": "Parolele trebuie să fie la fel",
     "CONFIRMPASSWORD": "Confirmă parola",
     "DONTHAVEACCOUNT": "Nu ai încă cont?",
-    "REGISTERERROR": "Nu s-a putut crea un cont nou :("
+    "REGISTERERROR": "Nu s-a putut crea un cont nou :(",
+    "HOMEPAGE": {
+        "WELCOME": "Bine ai venit pe GAIT!",
+        "HISTORY": "Istoric",
+        "WELCOMESUBTITLE": "Dornic să afli mai multe despre GitHub sau despre țările lumii? Tastează întrebarea mai jos și apasă TRIMITE!",
+        "SENDBUTTON": "TRIMITE",
+        "TYPEPROMPT": "Tastează-ți întrebarea...",
+        "YOU": "Tu",
+        "GAITSERVER": "GAIT Server",
+        "PROCESSING": "Procesare...",
+        "REDO": "Reîncearcă întrebarea",
+        "NEWQUESTION": "Pune o nouă întrebare"
+    }
 }

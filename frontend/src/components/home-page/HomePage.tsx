@@ -1,5 +1,4 @@
-// HomePage.tsx
-import React, { useState } from 'react';
+import { useContext, useState } from 'react';
 import {
     Box,
     Container,
@@ -14,14 +13,15 @@ import {
     Divider,
     Drawer,
     useMediaQuery,
-    IconButton,
     CircularProgress,
 } from '@mui/material';
 import { styled, keyframes } from '@mui/system';
-import DeleteIcon from '@mui/icons-material/Delete';
-import Header from '../../ui-helpers/header/Header'; // Adjust path as needed
+import Header from '../../ui-helpers/header/Header';
+import { useTranslation } from 'react-i18next';
+import { AppContext } from '../../store/app-context';
+import { HistoryPromptItem } from '../../constants';
+import { AppService } from '../../services';
 
-// Animated gradient background (similar to Login/Register style)
 const gradientAnimation = keyframes`
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -29,7 +29,7 @@ const gradientAnimation = keyframes`
 `;
 
 const DynamicBackground = styled('div')(({ theme }) => ({
-    minHeight: '100vh',
+    height: '100vh',
     background:
         theme.palette.mode === 'light'
             ? 'linear-gradient(45deg, #7928CA, #FF0080, #7928CA)'
@@ -40,105 +40,100 @@ const DynamicBackground = styled('div')(({ theme }) => ({
     flexDirection: 'column',
 }));
 
-interface Conversation {
-    prompt: string;
-    answer: string;
-    date: string; // e.g., "2/24/2025, 3:15 PM"
-}
+type Stage = 'initial' | 'conversation';
 
 const HomePage = () => {
-    // Manage whether we show the mobile drawer
+    const { promptHistory, addPromptIntoHistory } = useContext(AppContext);
+    const { t } = useTranslation();
+
     const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
-    const [drawerOpen, setDrawerOpen] = useState(false);
 
-    // Current prompt/answer
-    const [promptText, setPromptText] = useState('');
-    const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
-
-    // Keep a history of all past prompts/answers
-    const [history, setHistory] = useState<Conversation[]>([]);
-
-    // Loading state to simulate an async server call
     const [isLoading, setIsLoading] = useState(false);
+    const [stage, setStage] = useState<Stage>('initial');
+    const [loadedFromHistory, setLoadedFromHistory] = useState(false);
+
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [promptText, setPromptText] = useState('');
+    const [currentConversation, setCurrentConversation] = useState<HistoryPromptItem | null>(null);
 
     const toggleDrawer = () => {
         setDrawerOpen(!drawerOpen);
     };
 
-    // Send the prompt to the "server"
-    const handleSend = () => {
-        if (!promptText.trim()) return; // Do nothing if prompt is empty
+    const handleSend = async () => {
+        if (!promptText.trim()) return;
 
-        // Show a loading spinner
+        setLoadedFromHistory(false);
+        setStage('conversation');
         setIsLoading(true);
 
-        // Create a new conversation with no answer yet
-        const newConv: Conversation = {
+        const currentDate = new Date().toLocaleString();
+
+        const newConv: HistoryPromptItem = {
             prompt: promptText,
             answer: '',
-            date: new Date().toLocaleString(), // Store the date/time
+            createdAt: currentDate,
         };
 
-        // Display the user's prompt in the main area
         setCurrentConversation(newConv);
 
-        // Simulate a 2-second server response delay
-        setTimeout(() => {
-            const simulatedAnswer = `Answer to: ${promptText}`;
-            const updatedConv = { ...newConv, answer: simulatedAnswer };
+        const serverResponse = await AppService.sendPrompt(promptText.trim());
 
-            // Update the main area and push the conversation into history
-            setCurrentConversation(updatedConv);
-            setHistory((prev) => [updatedConv, ...prev]);
+        const answer = serverResponse.response;
+        const updatedConv = { ...newConv, answer: answer };
+        setCurrentConversation(updatedConv);
 
-            // Clear prompt field and stop loading
-            setPromptText('');
-            setIsLoading(false);
-        }, 2000);
+        const newPromptHistoryItem: HistoryPromptItem = {
+            prompt: promptText.trim(),
+            answer: answer,
+            createdAt: currentDate,
+        };
+        addPromptIntoHistory(newPromptHistoryItem);
+
+        setPromptText('');
+        setIsLoading(false);
     };
 
-    // Load a conversation from history into the main area
-    const handleHistoryClick = (conv: Conversation) => {
+    const handleNewQuestion = () => {
+        setCurrentConversation(null);
+        setPromptText('');
+        setStage('initial');
+    };
+
+    const handleRedoPrompt = () => {
+        setCurrentConversation(null);
+        setStage('initial');
+    };
+
+    const handleHistoryClick = (conv: HistoryPromptItem) => {
         setCurrentConversation(conv);
         setPromptText(conv.prompt);
+        setStage('conversation');
+        setLoadedFromHistory(true);
+
         if (isMobile) {
             setDrawerOpen(false);
         }
     };
 
-    // Remove a conversation from history
-    const handleDeleteHistoryItem = (index: number) => {
-        setHistory((prev) => {
-            const newHistory = [...prev];
-            newHistory.splice(index, 1);
-            return newHistory;
-        });
-        // Optional: if this was the currently displayed conversation, clear it
-    };
-
-    // Sidebar content: minimalistic prompt list
     const sidebarContent = (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                maxHeight: '100vh',
+                overflow: 'hidden',
+                scrollbarWidth: 'thin',
+            }}
+        >
             <Typography variant="h6" sx={{ p: 2 }}>
-                History
+                {t('HOMEPAGE.HISTORY')}
             </Typography>
             <Divider />
             <Box sx={{ overflowY: 'auto', flex: 1 }}>
                 <List>
-                    {history.map((conv, index) => (
-                        <ListItem
-                            disablePadding
-                            key={index}
-                            secondaryAction={
-                                <IconButton
-                                    edge="end"
-                                    aria-label="delete"
-                                    onClick={() => handleDeleteHistoryItem(index)}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
-                            }
-                        >
+                    {promptHistory.map((conv, index) => (
+                        <ListItem disablePadding key={index}>
                             <ListItemButton onClick={() => handleHistoryClick(conv)}>
                                 <ListItemText
                                     primary={
@@ -146,7 +141,7 @@ const HomePage = () => {
                                             ? conv.prompt.slice(0, 20) + '...'
                                             : conv.prompt
                                     }
-                                    secondary={conv.date}
+                                    secondary={conv.createdAt}
                                 />
                             </ListItemButton>
                         </ListItem>
@@ -161,7 +156,6 @@ const HomePage = () => {
             <Header toggleSidebar={toggleDrawer} />
 
             <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-                {/* Sidebar: permanent on desktop, drawer on mobile */}
                 {isMobile ? (
                     <>
                         <Drawer
@@ -184,93 +178,129 @@ const HomePage = () => {
                     </Drawer>
                 )}
 
-                {/* Main content area */}
                 <Container
                     component="main"
                     sx={{
                         flexGrow: 1,
                         display: 'flex',
                         flexDirection: 'column',
+                        justifyContent: stage === 'initial' ? 'center' : 'flex-end',
                         alignItems: 'center',
                         p: 2,
                     }}
                 >
-                    <Box
-                        sx={{
-                            width: '100%',
-                            maxWidth: 600,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 2,
-                            mt: 2,
-                        }}
-                    >
-                        {/* Show current conversation (prompt & answer) */}
-                        {currentConversation ? (
-                            <>
-                                {/* Prompt box with distinct background color */}
-                                <Paper
-                                    elevation={3}
-                                    sx={{
-                                        p: 2,
-                                        backgroundColor: 'primary.main',
-                                        color: 'primary.contrastText',
-                                    }}
-                                >
-                                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                                        You:
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        {currentConversation.prompt}
-                                    </Typography>
-                                </Paper>
+                    {stage === 'initial' ? (
+                        <Box sx={{ width: '100%', maxWidth: 600, textAlign: 'center' }}>
+                            <Typography variant="h3" gutterBottom>
+                                {t('HOMEPAGE.WELCOME')}
+                            </Typography>
+                            <Typography variant="body1" sx={{ mb: 3 }}>
+                                {t('HOMEPAGE.WELCOMESUBTITLE')}
+                            </Typography>
 
-                                {/* Answer box with different color & spinner if loading */}
-                                <Paper
-                                    elevation={3}
-                                    sx={{
-                                        p: 2,
-                                        backgroundColor: 'secondary.main',
-                                        color: 'secondary.contrastText',
-                                    }}
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                <TextField
+                                    fullWidth
+                                    variant="outlined"
+                                    placeholder={t('HOMEPAGE.TYPEPROMPT')}
+                                    value={promptText}
+                                    onChange={(e) => setPromptText(e.target.value)}
+                                />
+                                <Button
+                                    variant="contained"
+                                    disabled={!promptText.trim() || isLoading}
+                                    onClick={handleSend}
                                 >
-                                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                                        Server:
-                                    </Typography>
-                                    {isLoading ? (
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <CircularProgress size={20} />
-                                            <Typography variant="body2">Processing...</Typography>
-                                        </Box>
-                                    ) : (
-                                        <Typography variant="body1">
-                                            {currentConversation.answer}
-                                        </Typography>
-                                    )}
-                                </Paper>
-                            </>
-                        ) : (
-                            <Paper elevation={3} sx={{ p: 2, textAlign: 'center', minHeight: 150 }}>
-                                <Typography variant="body1">
-                                    Send a prompt to get started.
-                                </Typography>
-                            </Paper>
-                        )}
-
-                        {/* Prompt input & send button */}
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                placeholder="Type your prompt..."
-                                value={promptText}
-                                onChange={(e) => setPromptText(e.target.value)}
-                            />
-                            <Button variant="contained" onClick={handleSend}>
-                                Send
-                            </Button>
+                                    {t('HOMEPAGE.SENDBUTTON')}
+                                </Button>
+                            </Box>
                         </Box>
-                    </Box>
+                    ) : (
+                        <Box
+                            sx={{
+                                width: '100%',
+                                maxWidth: 600,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 2,
+                                mb: 2,
+                            }}
+                        >
+                            {currentConversation && (
+                                <>
+                                    <Paper
+                                        elevation={3}
+                                        sx={{
+                                            p: 2,
+                                            backgroundColor: 'primary.main',
+                                            color: 'primary.contrastText',
+                                        }}
+                                    >
+                                        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                            {t('HOMEPAGE.YOU')}:
+                                        </Typography>
+                                        <Typography variant="body1">
+                                            {currentConversation.prompt}
+                                        </Typography>
+                                    </Paper>
+
+                                    <Paper
+                                        elevation={3}
+                                        sx={{
+                                            p: 2,
+                                            backgroundColor: 'secondary.main',
+                                            color: 'secondary.contrastText',
+                                        }}
+                                    >
+                                        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                            {t('HOMEPAGE.GAITSERVER')}:
+                                        </Typography>
+                                        {isLoading ? (
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 1,
+                                                }}
+                                            >
+                                                <CircularProgress size={20} />
+                                                <Typography variant="body2">
+                                                    {t('HOMEPAGE.PROCESSING')}
+                                                </Typography>
+                                            </Box>
+                                        ) : (
+                                            <pre
+                                                style={{
+                                                    whiteSpace: 'pre-wrap',
+                                                    wordBreak: 'break-word',
+                                                }}
+                                            >
+                                                {JSON.stringify(
+                                                    currentConversation.answer,
+                                                    null,
+                                                    2,
+                                                )}
+                                            </pre>
+                                        )}
+                                    </Paper>
+                                </>
+                            )}
+
+                            {!isLoading && (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                                    {loadedFromHistory ? (
+                                        <Button variant="contained" onClick={handleRedoPrompt}>
+                                            {t('HOMEPAGE.REDO')}
+                                        </Button>
+                                    ) : (
+                                        <Button variant="contained" onClick={handleNewQuestion}>
+                                            {t('HOMEPAGE.NEWQUESTION')}
+                                        </Button>
+                                    )}
+                                </Box>
+                            )}
+                        </Box>
+                    )}
                 </Container>
             </Box>
         </DynamicBackground>

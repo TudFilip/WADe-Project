@@ -99,10 +99,8 @@ const RegisterPage = () => {
 
     return (
         <DynamicBackground>
-            {/* Header */}
             <Header />
 
-            {/* Centered Login Form */}
             <Container
                 component="main"
                 maxWidth="xs"

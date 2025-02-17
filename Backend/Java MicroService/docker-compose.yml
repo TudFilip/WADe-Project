@@ -67,6 +67,17 @@ services:
     ports:
       - "5000:5000"
 
+  frontend:
+    build:
+      context: ../../Frontend
+      dockerfile: DOCKERFILE
+    container_name: gait-frontend
+    restart: always
+    environment:
+
+    ports:
+      - "3000:80"
+
 volumes:
   pgdata:
   blazegraph_data:

@@ -1,7 +1,8 @@
 import { createContext, ReactNode, useEffect, useMemo, useState } from 'react';
 import { createTheme, PaletteMode, Theme } from '@mui/material';
 import i18n from '../utils/i18n';
-import { AuthService } from '../services';
+import { AppService, AuthService } from '../services';
+import { HistoryPromptItem } from '../constants';
 
 type ContextProps = {
     theme: Theme;
@@ -12,6 +13,8 @@ type ContextProps = {
     isLoggedIn: boolean;
     setIsLoggedIn: (isLogged: boolean) => void;
     logoutUser: () => void;
+    promptHistory: HistoryPromptItem[];
+    addPromptIntoHistory: (data: HistoryPromptItem) => void;
 };
 
 export const AppContext = createContext<ContextProps>({
@@ -23,6 +26,8 @@ export const AppContext = createContext<ContextProps>({
     isLoggedIn: false,
     setIsLoggedIn: (isLogged: boolean) => {},
     logoutUser: () => {},
+    promptHistory: [],
+    addPromptIntoHistory: (data: HistoryPromptItem) => {},
 });
 
 type AppContextProviderProps = {
@@ -30,9 +35,13 @@ type AppContextProviderProps = {
 };
 
 export default function AppContextProvider({ children }: AppContextProviderProps) {
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
     const [mode, setMode] = useState<PaletteMode>('light');
     const [language, setLanguage] = useState<string>('ro');
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+
+    const [promptHistory, setPromptHistory] = useState<HistoryPromptItem[]>([]);
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('themeMode') as PaletteMode | null;
@@ -47,6 +56,18 @@ export default function AppContextProvider({ children }: AppContextProviderProps
             setLanguage(savedLang);
             i18n.changeLanguage(savedLang);
         }
+    }, []);
+
+    useEffect(() => {
+        AppService.getPromptHistory()
+            .then((data) => {
+                if (!data.error) {
+                    setPromptHistory(data.promptHistory);
+                }
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
     }, []);
 
     const toggleColorScheme = () => {
@@ -78,6 +99,12 @@ export default function AppContextProvider({ children }: AppContextProviderProps
         setIsLoggedIn(false);
     };
 
+    const addPromptIntoHistory = (data: HistoryPromptItem) => {
+        setPromptHistory((prev) => {
+            return [data, ...prev];
+        });
+    };
+
     const value: ContextProps = {
         theme: theme,
         themeMode: mode,
@@ -87,7 +114,13 @@ export default function AppContextProvider({ children }: AppContextProviderProps
         isLoggedIn: isLoggedIn,
         setIsLoggedIn: setIsLoggedIn,
         logoutUser: logoutUser,
+        promptHistory: promptHistory,
+        addPromptIntoHistory: addPromptIntoHistory,
     };
+
+    if (isLoading) {
+        return null;
+    }
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
