@@ -1,5 +1,6 @@
 package org.gait.service;
 
+import lombok.extern.java.Log;
 import org.apache.jena.query.*;
 import org.apache.jena.sparql.exec.http.QueryExecutionHTTP;
 import org.apache.jena.sparql.exec.http.QuerySendMode;
@@ -50,7 +51,7 @@ public class UserHistoryService {
     public void saveUserHistory(String userId, String prompt, String response) {
         String historyURI = generateHistoryURI(userId, prompt);
         String safeUserId = sanitize(userId);
-        String safePrompt = sanitize(prompt);
+//        String safePrompt = sanitize(prompt);
         String safeResponse = sanitize(response);
         String timestamp = Instant.now().toString(); // ISO-8601 format
 
@@ -58,7 +59,7 @@ public class UserHistoryService {
                 "INSERT DATA { " +
                 "  <" + historyURI + "> a <" + UserHistoryOntology.UserHistory + "> ; " +
                 "    <" + UserHistoryOntology.userId + "> \"" + safeUserId + "\" ; " +
-                "    <" + UserHistoryOntology.prompt + "> \"" + safePrompt + "\" ; " +
+                "    <" + UserHistoryOntology.prompt + "> \"" + prompt + "\" ; " +
                 "    <" + UserHistoryOntology.graphqlResponse + "> \"" + safeResponse + "\" ; " +
                 "    <" + UserHistoryOntology.createdAt + "> \"" + timestamp + "\"^^xsd:dateTime ." +
                 "}";
@@ -95,6 +96,7 @@ public class UserHistoryService {
                 String response = sol.getLiteral("graphqlResponse").getString();
                 String createdAt = sol.getLiteral("createdAt").getString();
                 entries.add(new UserHistoryEntry(userId, prompt, response, createdAt));
+        System.out.println(sol.getLiteral("prompt").getString());
             }
         }
         Collections.reverse(entries);

@@ -1,6 +1,6 @@
 export type HistoryPromptItem = {
     userId?: string;
     prompt: string;
-    answer: string;
+    grapqlResponse: string;
     createdAt: string;
 };

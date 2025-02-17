@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import {
     Box,
     Container,
@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { AppContext } from '../../store/app-context';
 import { HistoryPromptItem } from '../../constants';
 import { AppService } from '../../services';
+import { useNavigate } from 'react-router-dom';
 
 const gradientAnimation = keyframes`
   0% { background-position: 0% 50%; }
@@ -43,11 +44,14 @@ const DynamicBackground = styled('div')(({ theme }) => ({
 type Stage = 'initial' | 'conversation';
 
 const HomePage = () => {
-    const { promptHistory, addPromptIntoHistory } = useContext(AppContext);
+    const navigate = useNavigate();
+    const { promptHistory, addPromptIntoHistory, checkIfIsLoggedIn, setIsLoggedIn } =
+        useContext(AppContext);
     const { t } = useTranslation();
 
     const isMobile = useMediaQuery((theme: any) => theme.breakpoints.down('sm'));
 
+    const [pageIsLoading, setPageIsLoading] = useState<boolean>(true);
     const [isLoading, setIsLoading] = useState(false);
     const [stage, setStage] = useState<Stage>('initial');
     const [loadedFromHistory, setLoadedFromHistory] = useState(false);
@@ -55,6 +59,16 @@ const HomePage = () => {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [promptText, setPromptText] = useState('');
     const [currentConversation, setCurrentConversation] = useState<HistoryPromptItem | null>(null);
+
+    useEffect(() => {
+        const isLoggedIn = checkIfIsLoggedIn();
+        if (!isLoggedIn) {
+            navigate('/', { replace: true });
+        } else {
+            setIsLoggedIn(true);
+            setPageIsLoading(false);
+        }
+    }, []);
 
     const toggleDrawer = () => {
         setDrawerOpen(!drawerOpen);
@@ -71,7 +85,7 @@ const HomePage = () => {
 
         const newConv: HistoryPromptItem = {
             prompt: promptText,
-            answer: '',
+            grapqlResponse: '',
             createdAt: currentDate,
         };
 
@@ -80,12 +94,13 @@ const HomePage = () => {
         const serverResponse = await AppService.sendPrompt(promptText.trim());
 
         const answer = serverResponse.response;
-        const updatedConv = { ...newConv, answer: answer };
+        const updatedConv = { ...newConv, grapqlResponse: answer };
+
         setCurrentConversation(updatedConv);
 
         const newPromptHistoryItem: HistoryPromptItem = {
             prompt: promptText.trim(),
-            answer: answer,
+            grapqlResponse: answer,
             createdAt: currentDate,
         };
         addPromptIntoHistory(newPromptHistoryItem);
@@ -151,6 +166,10 @@ const HomePage = () => {
         </Box>
     );
 
+    if (pageIsLoading) {
+        return null;
+    }
+
     return (
         <DynamicBackground>
             <Header toggleSidebar={toggleDrawer} />
@@ -204,7 +223,10 @@ const HomePage = () => {
                                     variant="outlined"
                                     placeholder={t('HOMEPAGE.TYPEPROMPT')}
                                     value={promptText}
-                                    onChange={(e) => setPromptText(e.target.value)}
+                                    onChange={(e) => {
+                                        console.log(promptText);
+                                        setPromptText(e.target.value);
+                                    }}
                                 />
                                 <Button
                                     variant="contained"
@@ -276,7 +298,7 @@ const HomePage = () => {
                                                 }}
                                             >
                                                 {JSON.stringify(
-                                                    currentConversation.answer,
+                                                    currentConversation.grapqlResponse,
                                                     null,
                                                     2,
                                                 )}

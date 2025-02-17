@@ -46,6 +46,7 @@ class AppService {
         try {
             const response = await axios.get(`${this.CLIENT_API}`);
             const serverResponse = response.data;
+            console.log('serverResponse: ', serverResponse);
 
             return {
                 error: false,

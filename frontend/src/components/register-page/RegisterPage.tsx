@@ -122,7 +122,7 @@ const RegisterPage = () => {
                         required
                         fullWidth
                         label={t('FULLNAME')}
-                        value={email}
+                        value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         error={Boolean(fullNameError)}
                         helperText={fullNameError}

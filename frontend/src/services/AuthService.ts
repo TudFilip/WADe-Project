@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { API__BASE_URL, LoginBody, RegisterAccountBody } from '../constants';
 import { Cookies } from 'react-cookie';
+import { jwtDecode } from 'jwt-decode';
 
 class AuthService {
     private static instance: AuthService | null = null;
@@ -22,6 +23,18 @@ class AuthService {
         });
 
         AuthService.instance = this;
+    }
+
+    public authTokenIsValid() {
+        const token = this.cookies.get('authToken');
+        if (!token) return false;
+        try {
+            const decodedToken = jwtDecode(token);
+            const currentTime = Date.now() / 1000;
+            return decodedToken.exp > currentTime;
+        } catch (error: any) {
+            return false;
+        }
     }
 
     public static getInstance(): AuthService {
@@ -57,7 +70,7 @@ class AuthService {
 
     public async createAccount(data: RegisterAccountBody): Promise<{ error: boolean }> {
         try {
-            await axios.post(`${this.AUTH_API}/register`, data);
+            await axios.post(`${this.AUTH_API}/register/client`, data);
 
             return {
                 error: false,

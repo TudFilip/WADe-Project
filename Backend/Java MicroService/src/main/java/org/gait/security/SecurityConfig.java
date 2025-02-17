@@ -3,6 +3,7 @@ package org.gait.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -35,7 +36,7 @@ public class SecurityConfig {
     }
 
     /**
-     * DAO-based authentication provider if you have a login endpoint using email+password.
+     * DAO-based authentication provider for login endpoints.
      */
     @Bean
     public AuthenticationProvider authenticationProvider() {
@@ -46,7 +47,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Needed if you want to authenticate user credentials via /login or /auth endpoint.
+     * AuthenticationManager bean.
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
@@ -54,24 +55,25 @@ public class SecurityConfig {
     }
 
     /**
-     * Defines the main HTTP security filter chain for JWT-based auth.
-     * Also enables CORS with default configuration.
+     * Defines the main HTTP security filter chain for JWT-based authentication.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Enable CORS with custom configuration
+                // Enable CORS using our custom configuration
                 .cors(Customizer.withDefaults())
-                .csrf(csrf -> csrf.disable())  // Typically disabled for stateless APIs
+                .csrf(csrf -> csrf.disable())  // Disable CSRF for stateless APIs
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Open all auth endpoints for login and registration:
+                        // Explicitly allow preflight OPTIONS requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Allow unauthenticated access to auth endpoints:
                         .requestMatchers("/api/auth/**").permitAll()
-                        // Admin, Tester, Client endpoints require roles
+                        // Role-based endpoints:
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/tester/**").hasRole("TESTER")
                         .requestMatchers("/client/**").hasRole("CLIENT")
-                        // Everything else must be authenticated
+                        // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults())
@@ -87,11 +89,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Allow all origins, headers, and methods for development. Adjust in production!
-        configuration.setAllowedOrigins(Arrays.asList("*"));
+        // Allow requests from the browser-accessible origin
+        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

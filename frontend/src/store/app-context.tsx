@@ -15,6 +15,7 @@ type ContextProps = {
     logoutUser: () => void;
     promptHistory: HistoryPromptItem[];
     addPromptIntoHistory: (data: HistoryPromptItem) => void;
+    checkIfIsLoggedIn: () => boolean;
 };
 
 export const AppContext = createContext<ContextProps>({
@@ -28,6 +29,7 @@ export const AppContext = createContext<ContextProps>({
     logoutUser: () => {},
     promptHistory: [],
     addPromptIntoHistory: (data: HistoryPromptItem) => {},
+    checkIfIsLoggedIn: () => false,
 });
 
 type AppContextProviderProps = {
@@ -43,32 +45,41 @@ export default function AppContextProvider({ children }: AppContextProviderProps
 
     const [promptHistory, setPromptHistory] = useState<HistoryPromptItem[]>([]);
 
+    const checkIfIsLoggedIn = () => {
+        const authTokenIsValid = AuthService.authTokenIsValid();
+        return authTokenIsValid;
+    };
+
     useEffect(() => {
         const savedTheme = localStorage.getItem('themeMode') as PaletteMode | null;
         if (savedTheme) {
             setMode(savedTheme);
         }
-    }, []);
 
-    useEffect(() => {
         const savedLang = localStorage.getItem('language');
         if (savedLang) {
             setLanguage(savedLang);
             i18n.changeLanguage(savedLang);
         }
+
+        setIsLoading(false);
     }, []);
 
     useEffect(() => {
-        AppService.getPromptHistory()
-            .then((data) => {
+        const tokenIsValid = checkIfIsLoggedIn();
+        if (tokenIsValid) {
+            AppService.getPromptHistory().then((data) => {
                 if (!data.error) {
+                    // const history = data.promptHistory;
+                    // history.forEach((item) => {
+                    //     const response = JSON.parse(item.grapqlResponse);
+                    //     console.log(response);
+                    // });
                     setPromptHistory(data.promptHistory);
                 }
-            })
-            .finally(() => {
-                setIsLoading(false);
             });
-    }, []);
+        }
+    }, [isLoggedIn]);
 
     const toggleColorScheme = () => {
         setMode((prev) => {
@@ -116,6 +127,7 @@ export default function AppContextProvider({ children }: AppContextProviderProps
         logoutUser: logoutUser,
         promptHistory: promptHistory,
         addPromptIntoHistory: addPromptIntoHistory,
+        checkIfIsLoggedIn: checkIfIsLoggedIn,
     };
 
     if (isLoading) {
