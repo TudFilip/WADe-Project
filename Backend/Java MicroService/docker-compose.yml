@@ -25,6 +25,9 @@ services:
     depends_on:
       - db
       - blazegraph
+      - nlp-service
+    env_file:
+      - .env  # Load environment variables from .env file
     environment:
       SPRING_APPLICATION_NAME: Gait
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/GaitTST
@@ -32,9 +35,11 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       spring.liquibase.change-log: classpath:db/changelog/db.changelog-master.xml
-      jwt.secret: CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_STRING_ABC123
+      jwt.secret: ${JWT_SECRET}  # Use a secure secret from .env
       jwt.expiration-ms: 86400000
       BLAZEGRAPH_ENDPOINT: http://blazegraph:9999/blazegraph/namespace/kb/sparql
+      NLP_ENDPOINT: http://nlp-service:5000/parse/with-api-detection
+      GITHUB_TOKEN: ${GITHUB_TOKEN}  # Pass GitHub Token from .env
     ports:
       - "8080:8080"
 
@@ -48,6 +53,19 @@ services:
       - "9999:9999"
     volumes:
       - blazegraph_data:/var/lib/blazegraph/data
+
+  nlp-service:
+    build:
+      context: ../Python MicroService   # Fixed directory name (avoid spaces!)
+      dockerfile: Dockerfile
+    container_name: nlp-service
+    restart: always
+    env_file:
+      - .env  # Load environment variables from .env file
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}  # Securely load OpenAI key
+    ports:
+      - "5000:5000"
 
 volumes:
   pgdata:

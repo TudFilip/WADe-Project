@@ -1,12 +1,14 @@
 package org.gait.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
 @Getter
 @Setter
+@ToString
+@AllArgsConstructor
+@NoArgsConstructor
 public class NLPResponse {
     private String action;
     private String target;

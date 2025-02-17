@@ -15,6 +15,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -44,12 +45,13 @@ public class UserHistoryService {
     }
 
     /**
-     * Saves a user history record in Blazegraph with userId, prompt, and creation timestamp.
+     * Saves a user history record in Blazegraph with userId, prompt, GraphQL response, and creation timestamp.
      */
-    public void saveUserHistory(String userId, String prompt) {
+    public void saveUserHistory(String userId, String prompt, String response) {
         String historyURI = generateHistoryURI(userId, prompt);
         String safeUserId = sanitize(userId);
         String safePrompt = sanitize(prompt);
+        String safeResponse = sanitize(response);
         String timestamp = Instant.now().toString(); // ISO-8601 format
 
         String updateString = PREFIXES +
@@ -57,6 +59,7 @@ public class UserHistoryService {
                 "  <" + historyURI + "> a <" + UserHistoryOntology.UserHistory + "> ; " +
                 "    <" + UserHistoryOntology.userId + "> \"" + safeUserId + "\" ; " +
                 "    <" + UserHistoryOntology.prompt + "> \"" + safePrompt + "\" ; " +
+                "    <" + UserHistoryOntology.graphqlResponse + "> \"" + safeResponse + "\" ; " +
                 "    <" + UserHistoryOntology.createdAt + "> \"" + timestamp + "\"^^xsd:dateTime ." +
                 "}";
         UpdateRequest updateRequest = UpdateFactory.create(updateString);
@@ -70,10 +73,11 @@ public class UserHistoryService {
     public List<UserHistoryEntry> getHistoryForUser(String userId) {
         String safeUserId = sanitize(userId);
         String queryString = PREFIXES +
-                "SELECT ?s ?prompt ?createdAt WHERE { " +
+                "SELECT ?s ?prompt ?graphqlResponse ?createdAt WHERE { " +
                 "  ?s a <" + UserHistoryOntology.UserHistory + "> ; " +
                 "     <" + UserHistoryOntology.userId + "> ?uid ; " +
                 "     <" + UserHistoryOntology.prompt + "> ?prompt ; " +
+                "     <" + UserHistoryOntology.graphqlResponse + "> ?graphqlResponse ; " +
                 "     <" + UserHistoryOntology.createdAt + "> ?createdAt . " +
                 "  FILTER(str(?uid) = \"" + safeUserId + "\")" +
                 "}";
@@ -88,10 +92,12 @@ public class UserHistoryService {
             while (results.hasNext()) {
                 QuerySolution sol = results.nextSolution();
                 String prompt = sol.getLiteral("prompt").getString();
+                String response = sol.getLiteral("graphqlResponse").getString();
                 String createdAt = sol.getLiteral("createdAt").getString();
-                entries.add(new UserHistoryEntry(userId, prompt, createdAt));
+                entries.add(new UserHistoryEntry(userId, prompt, response, createdAt));
             }
         }
+        Collections.reverse(entries);
         return entries;
     }
 
@@ -101,11 +107,13 @@ public class UserHistoryService {
     public static class UserHistoryEntry {
         public final String userId;
         public final String prompt;
+        public final String graphqlResponse;
         public final String createdAt;
 
-        public UserHistoryEntry(String userId, String prompt, String createdAt) {
+        public UserHistoryEntry(String userId, String prompt, String graphqlResponse, String createdAt) {
             this.userId = userId;
             this.prompt = prompt;
+            this.graphqlResponse = graphqlResponse;
             this.createdAt = createdAt;
         }
     }
