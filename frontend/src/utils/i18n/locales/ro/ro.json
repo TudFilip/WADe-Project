@@ -1,0 +1,17 @@
+{
+    "TUTORIAL": "Tutorial",
+    "LOGIN": "Autentificare",
+    "FAILEDLOGIN": "Autentificare eșuată",
+    "CREATENEWACCOUNT": "Crează cont nou",
+    "CREATEACCOUNT": "Crează cont",
+    "FULLNAME": "Numele întreg",
+    "FULLNAMEREQUIRED": "Numele întreg este obligatoriu",
+    "EMAIL": "Email",
+    "EMAILREQUIRED": "Emailul este obligatoriu",
+    "PASSWORD": "Parolă",
+    "PASSWORDREQUIRED": "Parola este obligatorie",
+    "PASSWORDMUSTMATCH": "Parolele trebuie să fie la fel",
+    "CONFIRMPASSWORD": "Confirmă parola",
+    "DONTHAVEACCOUNT": "Nu ai încă cont?",
+    "REGISTERERROR": "Nu s-a putut crea un cont nou :("
+}
