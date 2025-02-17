@@ -5,6 +5,7 @@ public final class UserHistoryOntology {
     public static final String UserHistory = NS + "UserHistory";
     public static final String userId = NS + "userId";
     public static final String prompt = NS + "prompt";
+    public static final String graphqlResponse = NS + "graphqlResponse";
     public static final String createdAt = NS + "createdAt";
 
     private UserHistoryOntology() {

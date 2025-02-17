@@ -6,7 +6,7 @@
 # Class for a user history record.
 uh:UserHistory a rdfs:Class ;
                rdfs:label "User History" ;
-               rdfs:comment "A record that stores a user ID, the user prompt, and the creation timestamp." .
+               rdfs:comment "A record that stores a user ID, the user prompt, the GraphQL response, and the creation timestamp." .
 
 # Property for the user ID.
 uh:userId a rdf:Property ;
@@ -21,6 +21,13 @@ uh:prompt a rdf:Property ;
           rdfs:comment "The prompt provided by the user." ;
           rdfs:domain uh:UserHistory ;
           rdfs:range xsd:string .
+
+# Property for the GraphQL response.
+uh:graphqlResponse a rdf:Property ;
+                   rdfs:label "GraphQL Response" ;
+                   rdfs:comment "The response returned by the GraphQL query." ;
+                   rdfs:domain uh:UserHistory ;
+                   rdfs:range xsd:string .
 
 # Property for the creation timestamp.
 uh:createdAt a rdf:Property ;
