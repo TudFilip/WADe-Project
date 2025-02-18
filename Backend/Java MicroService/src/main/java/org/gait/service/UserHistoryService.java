@@ -11,6 +11,7 @@ import org.gait.vocabulary.UserHistoryOntology;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -21,12 +22,11 @@ import java.util.List;
 @Service
 public class UserHistoryService {
 
-    @Value("${blazegraph.endpoint:http://localhost:9999/blazegraph/namespace/kb/sparql}")
-    private String blazegraphEndpoint;
-
     // Prefixes for our user history ontology and XSD.
     private static final String PREFIXES = "PREFIX uh: <" + UserHistoryOntology.NS + "> " +
             "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ";
+    @Value("${blazegraph.endpoint:http://localhost:9999/blazegraph/namespace/kb/sparql}")
+    private String blazegraphEndpoint;
 
     /**
      * Generates a unique URI for a history record using the user ID and prompt.
@@ -50,7 +50,7 @@ public class UserHistoryService {
     public void saveUserHistory(String userId, String prompt, String response) {
         String historyURI = generateHistoryURI(userId, prompt);
         String safeUserId = sanitize(userId);
-        String safePrompt = sanitize(prompt);
+//        String safePrompt = sanitize(prompt);
         String safeResponse = sanitize(response);
         String timestamp = Instant.now().toString(); // ISO-8601 format
 
@@ -58,7 +58,7 @@ public class UserHistoryService {
                 "INSERT DATA { " +
                 "  <" + historyURI + "> a <" + UserHistoryOntology.UserHistory + "> ; " +
                 "    <" + UserHistoryOntology.userId + "> \"" + safeUserId + "\" ; " +
-                "    <" + UserHistoryOntology.prompt + "> \"" + safePrompt + "\" ; " +
+                "    <" + UserHistoryOntology.prompt + "> \"" + prompt + "\" ; " +
                 "    <" + UserHistoryOntology.graphqlResponse + "> \"" + safeResponse + "\" ; " +
                 "    <" + UserHistoryOntology.createdAt + "> \"" + timestamp + "\"^^xsd:dateTime ." +
                 "}";
@@ -91,7 +91,11 @@ public class UserHistoryService {
             ResultSet results = qexec.execSelect();
             while (results.hasNext()) {
                 QuerySolution sol = results.nextSolution();
-                String prompt = sol.getLiteral("prompt").getString();
+                String encodedPrompt = sol.getLiteral("prompt").getString();
+                String prompt = URLDecoder.decode(encodedPrompt, StandardCharsets.UTF_8);
+                if (prompt.endsWith("=")) {
+                    prompt = prompt.substring(0, prompt.length() - 1);
+                }
                 String response = sol.getLiteral("graphqlResponse").getString();
                 String createdAt = sol.getLiteral("createdAt").getString();
                 entries.add(new UserHistoryEntry(userId, prompt, response, createdAt));

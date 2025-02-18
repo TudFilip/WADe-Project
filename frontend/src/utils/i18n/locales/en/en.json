@@ -1,0 +1,29 @@
+{
+    "TUTORIAL": "Tutorial",
+    "LOGIN": "Login",
+    "FAILEDLOGIN": "Failed authentication",
+    "CREATENEWACCOUNT": "Create new account",
+    "CREATEACCOUNT": "Create Account",
+    "FULLNAME": "Full Name",
+    "FULLNAMEREQUIRED": "Full Name is required",
+    "EMAIL": "Email",
+    "EMAILREQUIRED": "Email is required",
+    "PASSWORD": "Password",
+    "PASSWORDREQUIRED": "Password is required",
+    "PASSWORDMUSTMATCH": "Passwords must match",
+    "CONFIRMPASSWORD": "Confirm Password",
+    "DONTHAVEACCOUNT": "Don't have an account?",
+    "REGISTERERROR": "Cannot create new account :(",
+    "HOMEPAGE": {
+        "WELCOME": "Welcome to GAIT!",
+        "HISTORY": "History",
+        "WELCOMESUBTITLE": "Eager to find out more about GitHub or world countries? Type your prompt below and click SEND!",
+        "SENDBUTTON": "SEND",
+        "TYPEPROMPT": "Type your prompt...",
+        "YOU": "You",
+        "GAITSERVER": "GAIT Server",
+        "PROCESSING": "Processing...",
+        "REDO": "Redo prompt",
+        "NEWQUESTION": "Ask a new question"
+    }
+}

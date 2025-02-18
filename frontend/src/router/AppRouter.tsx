@@ -5,7 +5,9 @@ import LazyLoader from './LazyLoader';
 
 // Pages Components
 const Layout = lazy(() => import('./Layout'));
-const MainPage = lazy(() => import('../components/main-page/MainPage'));
+const LoginPage = lazy(() => import('../components/login-page/LoginPage'));
+const RegisterPage = lazy(() => import('../components/register-page/RegisterPage'));
+const HomePage = lazy(() => import('../components/home-page/HomePage'));
 
 const router = createBrowserRouter([
     {
@@ -13,7 +15,19 @@ const router = createBrowserRouter([
         children: [
             {
                 path: '/',
-                element: <LazyLoader Component={MainPage} />,
+                element: <LazyLoader Component={LoginPage} />,
+            },
+            {
+                path: '/login',
+                element: <LazyLoader Component={LoginPage} />,
+            },
+            {
+                path: '/register',
+                element: <LazyLoader Component={RegisterPage} />,
+            },
+            {
+                path: '/home',
+                element: <LazyLoader Component={HomePage} />,
             },
         ],
     },

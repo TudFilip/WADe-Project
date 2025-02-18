@@ -67,6 +67,19 @@ services:
     ports:
       - "5000:5000"
 
+  frontend:
+    build:
+      context: ../../Frontend
+      dockerfile: DOCKERFILE
+    container_name: gait-frontend
+    restart: always
+    environment:
+      VITE_API_PROTOCOL: "http"
+      VITE_API_HOSTNAME: "app"
+      VITE_API_PORT: "8080"
+    ports:
+      - "3000:80"
+
 volumes:
   pgdata:
   blazegraph_data:
