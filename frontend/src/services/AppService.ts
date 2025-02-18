@@ -45,12 +45,11 @@ class AppService {
     }> {
         try {
             const response = await axios.get(`${this.CLIENT_API}`);
-            const serverResponse = response.data;
-            console.log('serverResponse: ', serverResponse);
+            const serverResponse: HistoryPromptItem[] = response.data;
 
             return {
                 error: false,
-                promptHistory: serverResponse,
+                promptHistory: serverResponse.reverse(),
                 message: 'Success',
             };
         } catch (error: any) {

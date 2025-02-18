@@ -56,8 +56,8 @@ const HomePage = () => {
     const [stage, setStage] = useState<Stage>('initial');
     const [loadedFromHistory, setLoadedFromHistory] = useState(false);
 
-    const [drawerOpen, setDrawerOpen] = useState(false);
-    const [promptText, setPromptText] = useState('');
+    const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+    const [promptText, setPromptText] = useState<string>('');
     const [currentConversation, setCurrentConversation] = useState<HistoryPromptItem | null>(null);
 
     useEffect(() => {
@@ -84,8 +84,8 @@ const HomePage = () => {
         const currentDate = new Date().toLocaleString();
 
         const newConv: HistoryPromptItem = {
-            prompt: promptText,
-            grapqlResponse: '',
+            prompt: promptText.trim(),
+            graphqlResponse: '',
             createdAt: currentDate,
         };
 
@@ -94,15 +94,23 @@ const HomePage = () => {
         const serverResponse = await AppService.sendPrompt(promptText.trim());
 
         const answer = serverResponse.response;
-        const updatedConv = { ...newConv, grapqlResponse: answer };
 
+        let parsedAnswer;
+        try {
+            parsedAnswer = JSON.parse(answer);
+        } catch (error) {
+            parsedAnswer = answer;
+        }
+
+        const updatedConv = { ...newConv, graphqlResponse: parsedAnswer };
         setCurrentConversation(updatedConv);
 
         const newPromptHistoryItem: HistoryPromptItem = {
             prompt: promptText.trim(),
-            grapqlResponse: answer,
+            graphqlResponse: parsedAnswer,
             createdAt: currentDate,
         };
+
         addPromptIntoHistory(newPromptHistoryItem);
 
         setPromptText('');
@@ -121,7 +129,17 @@ const HomePage = () => {
     };
 
     const handleHistoryClick = (conv: HistoryPromptItem) => {
-        setCurrentConversation(conv);
+        let response = conv.graphqlResponse;
+        try {
+            response = JSON.parse(conv.graphqlResponse);
+        } catch (error: any) {
+            response = conv.graphqlResponse;
+        }
+
+        setCurrentConversation({
+            ...conv,
+            graphqlResponse: response,
+        });
         setPromptText(conv.prompt);
         setStage('conversation');
         setLoadedFromHistory(true);
@@ -223,10 +241,7 @@ const HomePage = () => {
                                     variant="outlined"
                                     placeholder={t('HOMEPAGE.TYPEPROMPT')}
                                     value={promptText}
-                                    onChange={(e) => {
-                                        console.log(promptText);
-                                        setPromptText(e.target.value);
-                                    }}
+                                    onChange={(e) => setPromptText(e.target.value)}
                                 />
                                 <Button
                                     variant="contained"
@@ -298,7 +313,7 @@ const HomePage = () => {
                                                 }}
                                             >
                                                 {JSON.stringify(
-                                                    currentConversation.grapqlResponse,
+                                                    currentConversation.graphqlResponse,
                                                     null,
                                                     2,
                                                 )}

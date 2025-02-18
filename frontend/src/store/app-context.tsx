@@ -70,11 +70,6 @@ export default function AppContextProvider({ children }: AppContextProviderProps
         if (tokenIsValid) {
             AppService.getPromptHistory().then((data) => {
                 if (!data.error) {
-                    // const history = data.promptHistory;
-                    // history.forEach((item) => {
-                    //     const response = JSON.parse(item.grapqlResponse);
-                    //     console.log(response);
-                    // });
                     setPromptHistory(data.promptHistory);
                 }
             });
