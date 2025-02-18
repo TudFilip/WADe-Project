@@ -69,7 +69,7 @@ const LoginPage = () => {
                 setLoginError(errorMessage);
             } else {
                 setIsLoggedIn(true);
-                return navigate('/home');
+                return navigate('/home', { replace: true });
             }
         }
     };

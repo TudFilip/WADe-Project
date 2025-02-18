@@ -135,13 +135,13 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
                         <GitHub />
                     </IconButton>
 
-                    {isMobile ? (
+                    {/* {isMobile ? (
                         <IconButton color="inherit">
                             <QuestionMark />
                         </IconButton>
                     ) : (
                         <Button color="inherit">{t('TUTORIAL')}</Button>
-                    )}
+                    )} */}
 
                     {isLoggedIn && (
                         <IconButton color="inherit" onClick={handleLogout}>

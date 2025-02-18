@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en" prefix="schema: http://schema.org">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>GAIT: GraphQL API Interactive Tool by Skibidi Team</title>
+		<link rel="stylesheet" href="scholarly.min.css" />
+	</head>
+
+	<body>
+		<article typeof="schema:ScholarlyArticle">
+			<header>
+				<h1>GAIT: GraphQL API Interactive Tool</h1>
+				<p><strong>Authors:</strong> Bălteanu Andrei, Filip Tudor Mihail</p>
+				<p><strong>Affiliation:</strong> Skibidi Team</p>
+				<p><strong>Date:</strong> 18.02.2025</p>
+				<p>
+					<strong>Abstract:</strong> This report presents GAIT, a web-based tool that
+					enables users to interact with GraphQL APIs using natural language prompts. GAIT
+					simplifies API querying by supporting text, multi-lingual capabilities, and
+					seamless API integration. The report outlines the project’s design,
+					architecture, implementation, challenges, and future directions. The system is
+					currently deployed on an AWS EC2 instance.
+				</p>
+			</header>
+
+			<nav role="contentinfo">
+				<h2>Table of Contents</h2>
+				<ol role="directory">
+					<li><a href="#introduction">1. Introduction</a></li>
+					<li><a href="#related-work">2. Related Work</a></li>
+					<li><a href="#system-architecture">3. System Architecture</a></li>
+					<li>
+						<a href="#backend-query-services">4. Backend Query Services</a>
+					</li>
+					<li><a href="#implementation">5. Implementation</a></li>
+					<li><a href="#challenges-solutions">6. Challenges & Solutions</a></li>
+					<li>
+						<a href="#future-work-conclusion">7. Future Work & Conclusion</a>
+					</li>
+					<li><a href="#references">8. References</a></li>
+				</ol>
+			</nav>
+
+			<section typeof="schema:Introduction">
+				<h2 id="introduction">1. Introduction</h2>
+				<p>
+					The WADe Project is developed to provide an intuitive interface for interacting
+					with APIs using natural language. This approach abstracts away the complexities
+					of manually writing queries and enables users, regardless of technical
+					background, to access and manipulate data effectively. In this report, we detail
+					the motivations, design choices, and implementation strategies that underpin the
+					WADe system.
+				</p>
+
+				<p>
+					GraphQL has become a widely adopted query language for APIs, offering
+					flexibility and efficiency in data retrieval. However, interacting with GraphQL
+					APIs requires technical knowledge of query structures, schema introspection, and
+					API endpoints. This complexity presents a barrier for non-technical users and
+					even slows down experienced developers when exploring new APIs. To address this
+					challenge, GAIT (GraphQL API Interactive Tool) was developed as an intuitive
+					web-based framework that allows users to interact with GraphQL APIs using
+					natural language constructs. By leveraging Natural Language Processing (NLP),
+					voice recognition, and real-time schema introspection, GAIT enables users to
+					query GraphQL APIs without manually writing queries.
+				</p>
+			</section>
+
+			<section>
+				<h2 id="related-work">2. Related Work</h2>
+				<p>
+					Numerous systems have attempted to bridge the gap between natural language and
+					structured queries. While tools like GraphiQL and various SQL natural language
+					processors exist, they often fall short when dealing with dynamic API schemas
+					and multiple data sources. WADe distinguishes itself by integrating real-time
+					schema introspection, advanced natural language processing, and an intelligent
+					caching mechanism using an RDF store (Blazegraph) to improve performance and
+					scalability.
+				</p>
+
+				<p>
+					Conversational agents such as Google Dialogflow and IBM Watson Assistant have
+					also explored natural language interaction with structured data. These tools
+					allow developers to create predefined intents and responses for user queries,
+					enabling some level of API interaction. However, they lack the flexibility to
+					handle dynamic GraphQL schemas without extensive manual configuration. Unlike
+					these systems, GAIT does not rely on predefined intents or static query
+					mappings. Instead, it dynamically analyzes GraphQL schemas and generates valid
+					queries in real-time, making it a more adaptable and scalable solution for API
+					interaction.
+				</p>
+
+				<p>
+					Several tools and platforms exist for interacting with GraphQL APIs, but they
+					often require technical expertise. Notable related work includes:
+				</p>
+				<ul>
+					<li>
+						<strong>GraphiQL:</strong> A web-based interactive GraphQL IDE allowing
+						developers to test and validate queries.
+					</li>
+					<li>
+						<strong>ColloQL:</strong> A system enabling natural language-based SQL
+						queries, which serves as inspiration for GAIT's query processing pipeline.
+					</li>
+					<li>
+						<strong>SPARQL Query Builders:</strong> Various RDF-based query builders
+						exist, but few integrate real-time NLP processing for dynamic query
+						generation.
+					</li>
+					<li>
+						<strong>Voice-Driven Assistants:</strong> Platforms such as Google Assistant
+						and Alexa provide voice-enabled querying, but their integration with GraphQL
+						is minimal.
+					</li>
+				</ul>
+			</section>
+
+			<section>
+				<h2 id="system-architecture">3. System Architecture</h2>
+				<p>GAIT follows a service-oriented architecture consisting of:</p>
+				<ul>
+					<li><strong>Frontend:</strong> A React-based SPA for UI interaction.</li>
+					<li><strong>Backend:</strong> A FastAPI service handling query processing.</li>
+					<p>
+						The backend of GAIT is built on FastAPI, leveraging modern Python-based web
+						frameworks to provide a high-performance API service. It consists of
+						multiple components:
+					</p>
+					<ul>
+						<li>
+							<strong>GraphQL Query Engine:</strong> Processes natural language
+							inputs, maps them to GraphQL queries, and executes them against various
+							APIs.
+						</li>
+						<li>
+							<strong>SPARQL Query Engine:</strong> Stores executed queries in RDF
+							format and allows retrieval via SPARQL queries.
+						</li>
+						<li>
+							<strong>NLP Processing:</strong> Uses SpaCy and deep-translation to
+							convert user inputs into structured queries.
+						</li>
+						<li>
+							<strong>Data Persistence:</strong> Queries and responses are stored in
+							RDF format to ensure semantic interoperability.
+						</li>
+					</ul>
+					<li>
+						<strong>APIs:</strong> Google Speech-to-Text, Google Translate and GraphQL
+						endpoints.
+					</li>
+				</ul>
+
+				<p>
+					The architecture of GAIT follows a
+					<strong>service-oriented</strong> approach, designed to process natural language
+					queries and interact with multiple GraphQL APIs efficiently. The system consists
+					of several core components that work together to transform user inputs into
+					structured GraphQL queries and return meaningful results.
+				</p>
+				<figure>
+					<img
+						style="margin-left: -150px"
+						src="https://github.com/user-attachments/assets/5e4530ed-ab36-48ee-9d15-674ec4e6bf19"
+						alt="General Architecture Diagram"
+					/>
+					<figcaption>General Architecture Diagram</figcaption>
+				</figure>
+
+				<p>
+					The GAIT system is composed of three major layers:
+					<strong>User Interface (UI), Processing Layer, and API Integration Layer</strong
+					>.
+				</p>
+				<ul>
+					<li>
+						<strong>User Interface (UI):</strong> Built as a
+						<strong>React-based Single Page Application (SPA)</strong>, accepting both
+						text and voice input for querying GraphQL APIs and displaying formatted
+						responses.
+					</li>
+					<li>
+						<strong>Processing Layer:</strong> Includes:
+						<ul>
+							<li>
+								<strong>Natural Language Understanding (NLU) Module:</strong>
+								Processes user queries, extracts intent, and translates them into
+								structured formats.
+							</li>
+							<li>
+								<strong>GraphQL Introspection Service:</strong> Analyzes and
+								retrieves the schema of target GraphQL APIs.
+							</li>
+							<li>
+								<strong>Query Generator:</strong> Constructs valid GraphQL queries.
+							</li>
+							<li>
+								<strong>Result Formatter:</strong> Formats API responses into a
+								user-friendly format.
+							</li>
+						</ul>
+					</li>
+					<li>
+						<strong>API Integration Layer:</strong> Manages requests to external GraphQL
+						APIs, ensuring efficient data retrieval and error handling.
+					</li>
+				</ul>
+
+				<p>The GAIT system follows a structured workflow for query processing:</p>
+				<ul>
+					<li>
+						<strong>User Input Processing:</strong> Users submit queries via text or
+						voice. If voice input is used, it is converted to text using the
+						<strong>Google Speech-to-Text API</strong>.
+					</li>
+					<li>
+						<strong>Query Generation:</strong> The NLU Module extracts key information,
+						GraphQL Introspection Service retrieves API schema details, and the Query
+						Generator constructs a valid GraphQL query.
+					</li>
+					<li>
+						<strong>Data Retrieval & Response Formatting:</strong> The API Integrator
+						sends the query to the GraphQL API, retrieves results, and the Result
+						Formatter processes and displays them to the user.
+					</li>
+				</ul>
+
+				<figure>
+					<img
+						src="https://github.com/user-attachments/assets/5eb103f1-22a0-4ae3-a0e7-d54fd1d2eda5"
+						alt="System Context Diagram"
+					/>
+					<figcaption>System Context Diagram</figcaption>
+				</figure>
+
+				<figure>
+					<img
+						style="margin-left: -150px"
+						src="https://github.com/user-attachments/assets/55887eab-9de1-4750-b87d-2ad41a6dacd7"
+						alt="Container Diagram"
+					/>
+					<figcaption>Container Diagram</figcaption>
+				</figure>
+
+				<p>GAIT’s architecture provides several advantages:</p>
+				<ul>
+					<li>
+						<strong>Modular and Scalable:</strong> Supports easy integration with new
+						GraphQL APIs and NLP improvements.
+					</li>
+					<li>
+						<strong>Flexible Input Handling:</strong> Enables both text and voice-based
+						interactions for a seamless experience.
+					</li>
+					<li>
+						<strong>Efficient Query Processing:</strong> The introspection service
+						dynamically constructs accurate GraphQL queries.
+					</li>
+				</ul>
+				<p>
+					By following this architecture, GAIT provides an
+					<strong>intuitive, intelligent, and flexible</strong> way for users to interact
+					with GraphQL APIs using natural language.
+				</p>
+			</section>
+
+			<section>
+				<h2 id="backend-query-services">4. Backend Query Services</h2>
+				<p>
+					The backend services of GAIT handle various aspects of GraphQL query processing,
+					SPARQL data management, and multilingual support. It is designed to efficiently
+					manage and process user queries, convert natural language into structured API
+					requests, and store these interactions for future reference.
+				</p>
+
+				<h3>4.1 GraphQL Query Processing</h3>
+				<p>
+					GAIT enables users to interact with multiple GraphQL APIs by converting natural
+					language queries into structured GraphQL requests. The backend follows these
+					steps:
+				</p>
+				<ul>
+					<li>
+						<strong>Query Interpretation:</strong> User input is processed using NLP
+						models to extract key entities.
+					</li>
+					<li>
+						<strong>API Mapping:</strong> The system identifies the relevant GraphQL API
+						based on extracted entities.
+					</li>
+					<li>
+						<strong>Query Construction:</strong> Dynamic GraphQL queries are generated
+						based on user intent.
+					</li>
+					<li>
+						<strong>Execution & Response:</strong> Queries are executed, and the JSON
+						response is structured for readability.
+					</li>
+				</ul>
+				<p>
+					This approach allows seamless interaction with multiple GraphQL APIs, providing
+					users with accurate and real-time results.
+				</p>
+
+				<h3>4.2 SPARQL Query Storage</h3>
+				<p>
+					GAIT incorporates an RDF-based query storage system using SPARQL, which allows
+					structured representation of user queries. The benefits of this approach
+					include:
+				</p>
+				<ul>
+					<li>Permanent storage of user queries with metadata.</li>
+					<li>Efficient retrieval of past queries using SPARQL queries.</li>
+					<li>
+						Integration with Linked Data applications for extended interoperability.
+					</li>
+				</ul>
+				<p>
+					The system ensures that user interactions are logged in a format that supports
+					efficient querying and analysis of API usage trends.
+				</p>
+
+				<h3>4.3 Multilingual Query Support</h3>
+				<p>
+					GAIT provides multilingual query support, making it accessible to users in
+					different linguistic regions. This feature is implemented through:
+				</p>
+				<ul>
+					<li>
+						<strong>Language Detection:</strong> The backend automatically detects the
+						language of the query using DeepL.
+					</li>
+					<li>
+						<strong>Translation:</strong> If the detected language is not English, the
+						query is translated into English before processing.
+					</li>
+					<li>
+						<strong>Response Handling:</strong> Query results are translated back into
+						the user’s preferred language.
+					</li>
+				</ul>
+				<p>
+					Currently, GAIT partially supports Romanian, German, and English, with future
+					plans to extend support for additional languages.
+				</p>
+
+				<h3>4.4 Backend Infrastructure & Performance Optimization</h3>
+				<p>
+					GAIT’s backend is built on FastAPI, ensuring high-performance processing of API
+					queries. Several optimizations have been implemented:
+				</p>
+				<ul>
+					<li>
+						<strong>Asynchronous Processing:</strong> FastAPI’s async capabilities allow
+						non-blocking query execution.
+					</li>
+					<li>
+						<strong>Caching:</strong> Frequently accessed API responses are cached to
+						reduce redundant requests.
+					</li>
+					<li>
+						<strong>Load Balancing:</strong> Requests are distributed efficiently to
+						ensure system stability under high loads.
+					</li>
+					<li>
+						<strong>Database Optimization:</strong> The RDF store is indexed to allow
+						fast retrieval of stored queries.
+					</li>
+				</ul>
+				<p>
+					These enhancements enable GAIT to handle a high volume of user interactions with
+					minimal response time.
+				</p>
+			</section>
+
+			<section>
+				<h2 id="implementation">5. Implementation</h2>
+				<p>
+					The tool consists of a modular backend using FastAPI and GraphQL processing via
+					gql. The API integrator supports GraphQL, SPARQL, and RDF query handling.
+				</p>
+				<p>
+					The backend services handle natural language query conversion, API interaction,
+					and RDF storage. The key implementations include:
+				</p>
+				<ul>
+					<li>
+						<strong>Query Parsing:</strong> The NLP engine processes user queries,
+						extracts entities, and maps them to GraphQL-compatible structures.
+					</li>
+					<li>
+						<strong>GraphQL Execution:</strong> The parsed queries are sent to public
+						GraphQL APIs (e.g., Country API, AniList API) using HTTP clients.
+					</li>
+					<li>
+						<strong>SPARQL Query Storage:</strong> Every query and its response are
+						stored in an RDF triple store, allowing structured queries via SPARQL.
+					</li>
+					<li>
+						<strong>Multi-Language Support:</strong> Uses translation APIs to support
+						multiple languages, dynamically translating queries to English.
+					</li>
+				</ul>
+				<p>
+					The <strong>Query Generator API</strong> is responsible for generating GraphQL
+					queries based on natural language input. It processes user queries, maps them to
+					appropriate GraphQL APIs, and returns structured data.
+				</p>
+
+				<p>
+					It detects the language of the input text using the
+					<code>langdetect</code> library. If the language is not English, the text is
+					translated into English using the <code>googletrans</code> library before
+					further processing.
+				</p>
+
+				<p>
+					The method <code>process_countries_query()</code> extracts relevant country
+					names, geographical regions, and currency-related terms from the input text. It
+					translates text to English if necessary.The method uses spaCy's named entity
+					recognition (NER) to extract GPE (Geopolitical Entity) labels corresponding to
+					country names and converts extracted country names into ISO Alpha-2 codes using
+					pycountry. Then detects keywords related to regions (e.g., "Europe", "Asia") and
+					currencies (e.g., "Euro", "Dollar"). Finally, it returns a structured dictionary
+					indicating the type of information requested.
+				</p>
+
+				<p>
+					Similarly, the method <code>process_spacex_query()</code> identifies references
+					to SpaceX rockets, launch events, and missions. It also translates text to
+					English if needed and detects SpaceX-related keywords such as "Falcon 9",
+					"Starship", "latest launch", and "Starlink". Then, it categorizes detected
+					keywords into rockets, launches, and missions and returns a structured
+					dictionary specifying the detected category and entities.
+				</p>
+				<hr />
+				<h3>Frontend Implementation</h3>
+				<p>
+					The frontend of GAIT is built using <strong>React</strong>, a JavaScript library
+					for developing interactive user interfaces. It focuses on providing a seamless
+					and user-friendly experience by integrating voice input, multi-lingual support,
+					and authentication mechanisms.
+				</p>
+
+				<h3>App Component</h3>
+				<p>
+					The <code>App</code> component acts as the core of the frontend application. It
+					employs <strong>React Router</strong> for navigation and wraps the entire app
+					within the <code>UserContextProvider</code> to manage user authentication and
+					state.
+				</p>
+
+				<pre><code>import React from &quot;react&quot;;
+              import { BrowserRouter, Routes, Route } from &quot;react-router-dom&quot;;
+              import QueryPage from &quot;./pages/QueryPage&quot;;
+              import Layout from &quot;./components/Layout&quot;;
+              import HomePage from &quot;./pages/HomePage&quot;;
+              import TutorialPage from &quot;./pages/TutorialPage&quot;;
+              import UserContextProvider from &quot;./hooks/context&quot;;
+              import UserProfile from &quot;./pages/UserProfile&quot;;
+              import SignInPage from &quot;./pages/SignInPage&quot;;
+              import NotFound from &quot;./pages/NotFound&quot;;
+              import PrivateRoutes from &quot;./components/PrivateRoutes&quot;;
+              import ResultsPage from &quot;./pages/ResultsPage&quot;;
+              
+              function App() {
+                return (
+                  &lt;div className=&quot;App&quot;&gt;
+                    &lt;BrowserRouter&gt;
+                      &lt;UserContextProvider&gt;
+                        &lt;Routes&gt;
+                          &lt;Route path=&quot;*&quot; element={&lt;NotFound /&gt;} /&gt;
+                          &lt;Route path=&quot;/&quot; element={&lt;Layout /&gt;}&gt;
+                            &lt;Route index element={&lt;HomePage /&gt;} /&gt;
+                            &lt;Route path=&quot;tutorial&quot; element={&lt;TutorialPage /&gt;} /&gt;
+                            &lt;Route path=&quot;sign-in&quot; element={&lt;SignInPage /&gt;} /&gt;
+                            &lt;Route element={&lt;PrivateRoutes /&gt;}&gt;
+                              &lt;Route path=&quot;query&quot; element={&lt;QueryPage /&gt;} /&gt;
+                              &lt;Route path=&quot;profile&quot; element={&lt;UserProfile /&gt;} /&gt;
+                              &lt;Route path=&quot;result&quot; element={&lt;ResultsPage /&gt;} /&gt;
+                            &lt;/Route&gt;
+                          &lt;/Route&gt;
+                        &lt;/Routes&gt;
+                      &lt;/UserContextProvider&gt;
+                    &lt;/BrowserRouter&gt;
+                  &lt;/div&gt;
+                );
+              }
+              
+              export default App;
+            </code></pre>
+
+				<h3>Authentication and Private Routes</h3>
+				<p>
+					The <code>PrivateRoutes</code> component ensures that only authenticated users
+					can access specific pages. It checks authentication status via the
+					<code>useAuth</code> hook and redirects unauthorized users to the sign-in page.
+				</p>
+
+				<pre>
+import { Outlet, Navigate } from &quot;react-router-dom&quot;;
+          import { useAuth } from &quot;../hooks/context.js&quot;;
+          
+          const PrivateRoutes = () =&gt; {
+            const { userData } = useAuth();
+            return userData.email !== &quot;&quot; ? &lt;Outlet /&gt; : &lt;Navigate to=&quot;/sign-in&quot; /&gt;;
+          };
+          export default PrivateRoutes;</pre
+				>
+
+				<h3>Layout and User Interface</h3>
+				<p>
+					The <code>Layout</code> component defines the main structure of the application,
+					including navigation menus that dynamically adjust based on user authentication
+					status. This ensures a fluid user experience, whether the user is signed in or
+					browsing anonymously.
+				</p>
+
+				<h3>User Context and Authentication</h3>
+				<p>
+					The <code>UserContextProvider</code> manages authentication state, login, and
+					registration processes. It also utilizes <strong>localStorage</strong> to
+					persist session data across page reloads.
+				</p>
+
+				<h3>Query Submission</h3>
+				<p>
+					The <code>QueryPage</code> component is the primary interface for users to
+					interact with GraphQL APIs. It supports both text-based and voice-based query
+					inputs, utilizing the <strong>webkitSpeechRecognition</strong> API for
+					speech-to-text conversion. Upon submission, queries are processed and sent to
+					the backend for execution.
+				</p>
+
+				<h3>Sign-In and Authentication Handling</h3>
+				<p>
+					The <code>SignInPage</code> handles user authentication by validating email and
+					password credentials. It integrates form validation techniques and manages
+					authentication status via the <code>useAuth</code> hook.
+				</p>
+
+				<h3>User Profile Management</h3>
+				<p>
+					The <code>UserProfile</code> component allows users to update their profile,
+					manage their query history, and modify their settings. It provides functionality
+					for changing passwords, uploading profile pictures, and managing saved queries.
+				</p>
+
+				<section id="sequence-diagram">
+					<h2>Sequence Diagram: Full Query Flow with Voice</h2>
+					<p>
+						The sequence diagram below outlines the end-to-end flow of a user query in
+						the GAIT system, starting from user authentication to displaying results and
+						optional bookmarking or downloading. The diagram highlights the interactions
+						between the user, the React application, backend APIs, and external services
+						like Google Speech-to-Text, Google Translate, and public GraphQL APIs.
+					</p>
+					<figure>
+						<img
+							style="height: 900px; margin-left: -200px"
+							src="https://github.com/user-attachments/assets/ce946359-5f87-4468-9885-1d90134bb7f6"
+							alt="Sequence Diagram"
+						/>
+						<figcaption>Full Query Flow with Voice</figcaption>
+					</figure>
+
+					<h3>Diagram Description</h3>
+					<p>
+						The process begins with user authentication, where login credentials are
+						verified against the User Profile Database. Once authenticated, the user
+						submits a query via voice input, which is processed using the Google
+						Speech-to-Text API to convert audio into text. If necessary, the text is
+						then sent to the Google Translate API for language conversion. The
+						translated or original query is forwarded to the Query Generator API, which
+						constructs a valid GraphQL request. This request is passed to the Integrator
+						API, which communicates with public GraphQL APIs to fetch the required data.
+						If translation is required, the results are sent back to the Google
+						Translate API before being stored in the Query History Database and
+						displayed to the user. Finally, users have the option to bookmark or
+						download results, with actions being managed by the Query Generator API and
+						stored in the system database.
+					</p>
+				</section>
+
+				<section id="use-case-diagram">
+					<h2>Use Case Diagram</h2>
+					<figure>
+						<img
+							src="https://github.com/user-attachments/assets/b6688a94-2784-493b-8f30-8cff5c67451e"
+							alt="Use Case Diagram"
+						/>
+						<figcaption>System Use Case Diagram</figcaption>
+					</figure>
+
+					<h3>Workflow Summary</h3>
+					<p>
+						The GAIT system follows a structured workflow that begins with user
+						authentication. Once logged in, users submit queries either through voice or
+						text input. The system processes the input, applying translation if needed,
+						and generates a valid GraphQL query. This query is executed against external
+						GraphQL APIs, retrieving relevant data. If required, results are translated
+						back into the user’s preferred language before being displayed.
+						Additionally, users have the option to bookmark or download their query
+						results for future use, enhancing usability and accessibility.
+					</p>
+				</section>
+
+				<hr />
+				<div class="markdown-heading">
+					<h2 class="heading-element">📌 Features</h2>
+					<a
+						id="user-content--features"
+						class="anchor"
+						aria-label="Permalink: 📌 Features"
+						href="#-features"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<ul>
+					<li>
+						<strong>Natural Language Query Interpretation</strong>: Converts user input
+						into GraphQL queries.
+					</li>
+					<li>
+						<strong>Multilingual Support</strong>: Handles English, Romanian, and
+						German.
+					</li>
+					<li>
+						<strong>GraphQL Query Execution</strong>: Sends requests to GraphQL APIs and
+						returns structured results.
+					</li>
+					<li>
+						<strong>SPARQL Query Storage</strong>: Saves queries and responses in RDF
+						format.
+					</li>
+					<li>
+						<strong>API-agnostic Design</strong>: Supports multiple GraphQL endpoints.
+					</li>
+				</ul>
+				<hr />
+				<div class="markdown-heading">
+					<h2 class="heading-element">🏗️ API Endpoints</h2>
+					<a
+						id="user-content-️-api-endpoints"
+						class="anchor"
+						aria-label="Permalink: 🏗️ API Endpoints"
+						href="#️-api-endpoints"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<div class="markdown-heading">
+					<h3 class="heading-element">🔹 Process Natural Language Query</h3>
+					<a
+						id="user-content--process-natural-language-query"
+						class="anchor"
+						aria-label="Permalink: 🔹 Process Natural Language Query"
+						href="#-process-natural-language-query"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<p><strong>Endpoint:</strong> <code>POST /query</code></p>
+				<p>
+					<strong>Description:</strong> Converts a natural language query into a GraphQL
+					query and returns results.
+				</p>
+				<div class="markdown-heading">
+					<h4 class="heading-element"><strong>Request Body:</strong></h4>
+					<a
+						id="user-content-request-body"
+						class="anchor"
+						aria-label="Permalink: Request Body:"
+						href="#request-body"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<div
+					class="highlight highlight-source-json notranslate position-relative overflow-auto"
+					data-snippet-clipboard-copy-content='{
+  "user_input": "What is the capital of France?"
+}'
+				>
+					<pre>{
+  <span class="pl-ent">"user_input"</span>: <span class="pl-s"><span class="pl-pds">"</span>What is the capital of France?<span class="pl-pds">"</span></span>
+}</pre>
+				</div>
+				<div class="markdown-heading">
+					<h4 class="heading-element"><strong>Response:</strong></h4>
+					<a
+						id="user-content-response"
+						class="anchor"
+						aria-label="Permalink: Response:"
+						href="#response"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<div
+					class="highlight highlight-source-json notranslate position-relative overflow-auto"
+					data-snippet-clipboard-copy-content='{
+  "query": "{ country(code: \"FR\") { name capital currency languages { name } } }",
+  "response": {
+    "data": {
+      "country": {
+        "name": "France",
+        "capital": "Paris",
+        "currency": "EUR",
+        "languages": [{ "name": "French" }]
+      }
+    }
+  },
+  "link": "http://localhost:5001/query/8a056e1a-3897-4440-a391-a3d291c1de8c"
+}'
+				>
+					<pre>{
+  <span class="pl-ent">"query"</span>: <span class="pl-s"><span class="pl-pds">"</span>{ country(code: <span class="pl-cce">\"</span>FR<span class="pl-cce">\"</span>) { name capital currency languages { name } } }<span class="pl-pds">"</span></span>,
+  <span class="pl-ent">"response"</span>: {
+    <span class="pl-ent">"data"</span>: {
+      <span class="pl-ent">"country"</span>: {
+        <span class="pl-ent">"name"</span>: <span class="pl-s"><span class="pl-pds">"</span>France<span class="pl-pds">"</span></span>,
+        <span class="pl-ent">"capital"</span>: <span class="pl-s"><span class="pl-pds">"</span>Paris<span class="pl-pds">"</span></span>,
+        <span class="pl-ent">"currency"</span>: <span class="pl-s"><span class="pl-pds">"</span>EUR<span class="pl-pds">"</span></span>,
+        <span class="pl-ent">"languages"</span>: [{ <span class="pl-ent">"name"</span>: <span class="pl-s"><span class="pl-pds">"</span>French<span class="pl-pds">"</span></span> }]
+      }
+    }
+  },
+  <span class="pl-ent">"link"</span>: <span class="pl-s"><span class="pl-pds">"</span>http://localhost:5001/query/8a056e1a-3897-4440-a391-a3d291c1de8c<span class="pl-pds">"</span></span>
+}</pre>
+				</div>
+				<hr />
+				<div class="markdown-heading">
+					<h3 class="heading-element">🔹 Retrieve Stored Queries</h3>
+					<a
+						id="user-content--retrieve-stored-queries"
+						class="anchor"
+						aria-label="Permalink: 🔹 Retrieve Stored Queries"
+						href="#-retrieve-stored-queries"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<p><strong>Endpoint:</strong> <code>GET /queries</code></p>
+				<p><strong>Description:</strong> Returns a list of stored query IDs.</p>
+				<div class="markdown-heading">
+					<h4 class="heading-element"><strong>Response:</strong></h4>
+					<a
+						id="user-content-response-1"
+						class="anchor"
+						aria-label="Permalink: Response:"
+						href="#response-1"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<div
+					class="highlight highlight-source-json notranslate position-relative overflow-auto"
+					data-snippet-clipboard-copy-content='[
+  { "queryID": "http://localhost:5001/query/8a056e1a-3897-4440-a391-a3d291c1de8c" },
+  { "queryID": "http://localhost:5001/query/3faa5b9b-8f81-401b-b5dd-8955fbeda615" }
+]'
+				>
+					<pre>[
+  { <span class="pl-ent">"queryID"</span>: <span class="pl-s"><span class="pl-pds">"</span>http://localhost:5001/query/8a056e1a-3897-4440-a391-a3d291c1de8c<span class="pl-pds">"</span></span> },
+  { <span class="pl-ent">"queryID"</span>: <span class="pl-s"><span class="pl-pds">"</span>http://localhost:5001/query/3faa5b9b-8f81-401b-b5dd-8955fbeda615<span class="pl-pds">"</span></span> }
+]</pre>
+				</div>
+				<hr />
+				<div class="markdown-heading">
+					<h3 class="heading-element">🔹 Execute SPARQL Query</h3>
+					<a
+						id="user-content--execute-sparql-query"
+						class="anchor"
+						aria-label="Permalink: 🔹 Execute SPARQL Query"
+						href="#-execute-sparql-query"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<p><strong>Endpoint:</strong> <code>POST /sparql</code></p>
+				<p><strong>Description:</strong> Executes a SPARQL query on stored RDF data.</p>
+				<div class="markdown-heading">
+					<h4 class="heading-element"><strong>Request Body:</strong></h4>
+					<a
+						id="user-content-request-body-1"
+						class="anchor"
+						aria-label="Permalink: Request Body:"
+						href="#request-body-1"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<div
+					class="highlight highlight-source-json notranslate position-relative overflow-auto"
+					data-snippet-clipboard-copy-content='{
+  "query": "PREFIX ex: &lt;http://example.org/queries#&gt; SELECT ?userQuery WHERE { ?query ex:userQuery ?userQuery . }"
+}'
+				>
+					<pre>{
+  <span class="pl-ent">"query"</span>: <span class="pl-s"><span class="pl-pds">"</span>PREFIX ex: &lt;http://example.org/queries#&gt; SELECT ?userQuery WHERE { ?query ex:userQuery ?userQuery . }<span class="pl-pds">"</span></span>
+}</pre>
+				</div>
+				<div class="markdown-heading">
+					<h4 class="heading-element"><strong>Response:</strong></h4>
+					<a
+						id="user-content-response-2"
+						class="anchor"
+						aria-label="Permalink: Response:"
+						href="#response-2"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<div
+					class="highlight highlight-source-json notranslate position-relative overflow-auto"
+					data-snippet-clipboard-copy-content='[
+  { "userQuery": "What is the capital of France?" },
+  { "userQuery": "Capital of Germany?" }
+]'
+				>
+					<pre>[
+  { <span class="pl-ent">"userQuery"</span>: <span class="pl-s"><span class="pl-pds">"</span>What is the capital of France?<span class="pl-pds">"</span></span> },
+  { <span class="pl-ent">"userQuery"</span>: <span class="pl-s"><span class="pl-pds">"</span>Capital of Germany?<span class="pl-pds">"</span></span> }
+]</pre>
+				</div>
+				<hr />
+				<div class="markdown-heading">
+					<h2 class="heading-element">🛠️ Setup Instructions</h2>
+					<a
+						id="user-content-️-setup-instructions"
+						class="anchor"
+						aria-label="Permalink: 🛠️ Setup Instructions"
+						href="#️-setup-instructions"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<div class="markdown-heading">
+					<h3 class="heading-element">1️⃣ Clone the Repository</h3>
+					<a
+						id="user-content-1️⃣-clone-the-repository"
+						class="anchor"
+						aria-label="Permalink: 1️⃣ Clone the Repository"
+						href="#1️⃣-clone-the-repository"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<div
+					class="highlight highlight-source-shell notranslate position-relative overflow-auto"
+					data-snippet-clipboard-copy-content="git clone https://github.com/YOUR_USERNAME/YOUR_REPO.wiki.git
+cd YOUR_REPO.wiki"
+				>
+					<pre>git clone https://github.com/YOUR_USERNAME/YOUR_REPO.wiki.git
+<span class="pl-c1">cd</span> YOUR_REPO.wiki</pre>
+				</div>
+				<div class="markdown-heading">
+					<h3 class="heading-element">2️⃣ Run the Backend with Docker</h3>
+					<a
+						id="user-content-2️⃣-run-the-backend-with-docker"
+						class="anchor"
+						aria-label="Permalink: 2️⃣ Run the Backend with Docker"
+						href="#2️⃣-run-the-backend-with-docker"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<div
+					class="highlight highlight-source-shell notranslate position-relative overflow-auto"
+					data-snippet-clipboard-copy-content="docker-compose up --build"
+				>
+					<pre>docker-compose up --build</pre>
+				</div>
+				<div class="markdown-heading">
+					<h3 class="heading-element">3️⃣ Run Tests</h3>
+					<a
+						id="user-content-3️⃣-run-tests"
+						class="anchor"
+						aria-label="Permalink: 3️⃣ Run Tests"
+						href="#3️⃣-run-tests"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<div
+					class="highlight highlight-source-shell notranslate position-relative overflow-auto"
+					data-snippet-clipboard-copy-content="docker-compose exec backend pytest tests.py"
+				>
+					<pre>docker-compose <span class="pl-c1">exec</span> backend pytest tests.py</pre>
+				</div>
+				<hr />
+				<div class="markdown-heading">
+					<h2 class="heading-element">📌 Supported GraphQL APIs</h2>
+					<a
+						id="user-content--supported-graphql-apis"
+						class="anchor"
+						aria-label="Permalink: 📌 Supported GraphQL APIs"
+						href="#-supported-graphql-apis"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<table role="table">
+					<thead>
+						<tr>
+							<th>API Name</th>
+							<th>Base URL</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Countries</td>
+							<td><code>https://countries.trevorblades.com/</code></td>
+						</tr>
+						<tr>
+							<td>SpaceX</td>
+							<td><code>https://api.spacex.land/graphql/</code></td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+
+			<section>
+				<h2 id="testing-evaluation">6. Testing & Evaluation</h2>
+				<p>
+					GAIT has undergone extensive unit and integration testing using pytest. The
+					results indicate high accuracy in query conversion and reliable API
+					interactions.
+				</p>
+				<p>
+					The backend has been tested rigorously using automated unit tests and
+					integration tests.
+				</p>
+				<ul>
+					<li>
+						<strong>Unit Testing:</strong> Pytest-based tests cover query conversion,
+						API interactions, and RDF storage validation.
+					</li>
+					<li>
+						<strong>Integration Testing:</strong> Simulated requests are run against
+						public GraphQL APIs to verify response consistency.
+					</li>
+					<li>
+						<strong>Performance Testing:</strong> Query execution time is measured under
+						different workloads to ensure scalability.
+					</li>
+					<li>
+						<strong>SPARQL Query Validation:</strong> Tests ensure that stored RDF data
+						is retrievable with accurate SPARQL queries.
+					</li>
+				</ul>
+				<div class="markdown-heading">
+					<h4 class="heading-element">✅ <strong>GraphQL Query Execution</strong></h4>
+					<a
+						id="user-content--graphql-query-execution"
+						class="anchor"
+						aria-label="Permalink: ✅ GraphQL Query Execution"
+						href="#-graphql-query-execution"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<p>
+					This test submits a natural language query and verifies that the correct GraphQL
+					response is returned.
+				</p>
+				<p>
+					<strong>Expected Behavior:</strong> The API should return a 200 OK response with
+					both query and response fields.
+				</p>
+				<p><strong>Example Test Case:</strong></p>
+				<div
+					class="highlight highlight-source-python notranslate position-relative overflow-auto"
+					data-snippet-clipboard-copy-content=" def test_graphql_query(client):
+             response = client.post('/query', json={'user_input': 'What is the capital of France?'})
+             assert response.status_code == 200
+             data = response.json()
+             assert 'query' in data
+             assert 'response' in data"
+				>
+					<pre> <span class="pl-k">def</span> <span class="pl-en">test_graphql_query</span>(<span class="pl-s1">client</span>):
+             <span class="pl-s1">response</span> <span class="pl-c1">=</span> <span class="pl-s1">client</span>.<span class="pl-c1">post</span>(<span class="pl-s">'/query'</span>, <span class="pl-s1">json</span><span class="pl-c1">=</span>{<span class="pl-s">'user_input'</span>: <span class="pl-s">'What is the capital of France?'</span>})
+             <span class="pl-k">assert</span> <span class="pl-s1">response</span>.<span class="pl-c1">status_code</span> <span class="pl-c1">==</span> <span class="pl-c1">200</span>
+             <span class="pl-s1">data</span> <span class="pl-c1">=</span> <span class="pl-s1">response</span>.<span class="pl-c1">json</span>()
+             <span class="pl-k">assert</span> <span class="pl-s">'query'</span> <span class="pl-c1">in</span> <span class="pl-s1">data</span>
+             <span class="pl-k">assert</span> <span class="pl-s">'response'</span> <span class="pl-c1">in</span> <span class="pl-s1">data</span></pre>
+				</div>
+				<div class="markdown-heading">
+					<h4 class="heading-element">✅ <strong>RDF Retrieval</strong></h4>
+					<a
+						id="user-content--rdf-retrieval"
+						class="anchor"
+						aria-label="Permalink: ✅ RDF Retrieval"
+						href="#-rdf-retrieval"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<p>This test retrieves RDF data in Turtle format and verifies its correctness.</p>
+				<p>
+					<strong>Expected Behavior:</strong> The API should return a 200 OK response with
+					RDF data starting with @prefix.
+				</p>
+				<p><strong>Example Test Case:</strong></p>
+				<div
+					class="highlight highlight-source-python notranslate position-relative overflow-auto"
+					data-snippet-clipboard-copy-content="def test_rdf_retrieval(client):
+            response = client.get('/rdf?format=turtle')
+            assert response.status_code == 200
+            assert response.text.startswith(&quot;@prefix&quot;)"
+				>
+					<pre><span class="pl-k">def</span> <span class="pl-en">test_rdf_retrieval</span>(<span class="pl-s1">client</span>):
+            <span class="pl-s1">response</span> <span class="pl-c1">=</span> <span class="pl-s1">client</span>.<span class="pl-c1">get</span>(<span class="pl-s">'/rdf?format=turtle'</span>)
+            <span class="pl-k">assert</span> <span class="pl-s1">response</span>.<span class="pl-c1">status_code</span> <span class="pl-c1">==</span> <span class="pl-c1">200</span>
+            <span class="pl-k">assert</span> <span class="pl-s1">response</span>.<span class="pl-c1">text</span>.<span class="pl-c1">startswith</span>(<span class="pl-s">"@prefix"</span>)</pre>
+				</div>
+				<div class="markdown-heading">
+					<h4 class="heading-element">✅ <strong>SPARQL Query Execution</strong></h4>
+					<a
+						id="user-content--sparql-query-execution"
+						class="anchor"
+						aria-label="Permalink: ✅ SPARQL Query Execution"
+						href="#-sparql-query-execution"
+						><svg
+							class="octicon octicon-link"
+							viewBox="0 0 16 16"
+							version="1.1"
+							width="16"
+							height="16"
+							aria-hidden="true"
+						>
+							<path
+								d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"
+							></path></svg
+					></a>
+				</div>
+				<p>This test executes a sample SPARQL query and verifies the results.</p>
+				<p>
+					<strong>Expected Behavior:</strong> The API should return a 200 OK response with
+					query results.
+				</p>
+				<p><strong>Example Test Case:</strong></p>
+				<div
+					class="highlight highlight-source-python notranslate position-relative overflow-auto"
+					data-snippet-clipboard-copy-content='def test_sparql_query(client):
+            sparql_query = {
+                "query": "PREFIX ex: &lt;http://example.org/queries#&gt; SELECT ?userQuery WHERE { ?query ex:userQuery ?userQuery . }"
+            }
+            response = client.post(&apos;/sparql&apos;, json=sparql_query)
+            assert response.status_code == 200
+            data = response.json()
+            assert len(data) &gt; 0'
+				>
+					<pre><span class="pl-k">def</span> <span class="pl-en">test_sparql_query</span>(<span class="pl-s1">client</span>):
+            <span class="pl-s1">sparql_query</span> <span class="pl-c1">=</span> {
+                <span class="pl-s">"query"</span>: <span class="pl-s">"PREFIX ex: &lt;http://example.org/queries#&gt; SELECT ?userQuery WHERE { ?query ex:userQuery ?userQuery . }"</span>
+            }
+            <span class="pl-s1">response</span> <span class="pl-c1">=</span> <span class="pl-s1">client</span>.<span class="pl-c1">post</span>(<span class="pl-s">'/sparql'</span>, <span class="pl-s1">json</span><span class="pl-c1">=</span><span class="pl-s1">sparql_query</span>)
+            <span class="pl-k">assert</span> <span class="pl-s1">response</span>.<span class="pl-c1">status_code</span> <span class="pl-c1">==</span> <span class="pl-c1">200</span>
+            <span class="pl-s1">data</span> <span class="pl-c1">=</span> <span class="pl-s1">response</span>.<span class="pl-c1">json</span>()
+            <span class="pl-k">assert</span> <span class="pl-en">len</span>(<span class="pl-s1">data</span>) <span class="pl-c1">&gt;</span> <span class="pl-c1">0</span></pre>
+				</div>
+			</section>
+
+			<section>
+				<h2 id="challenges-solutions">7. Challenges & Solutions</h2>
+				<p>
+					During the development of GAIT, several challenges were encountered, requiring
+					innovative solutions to ensure smooth functionality and user experience.
+				</p>
+
+				<h3>Natural Language Understanding Accuracy</h3>
+				<p>
+					One of the primary difficulties was ensuring that the system correctly
+					interprets natural language queries and maps them to valid GraphQL queries.
+					Misinterpretation of user intent could lead to incorrect or failed API requests.
+				</p>
+				<p>
+					<strong>Solution:</strong> To address this, we integrated a
+					<strong>Natural Language Understanding (NLU) module</strong> that leverages
+					machine learning models trained on diverse datasets.
+				</p>
+
+				<h3>Voice Input Processing</h3>
+				<p>
+					Recognizing and converting voice queries into structured text while maintaining
+					accuracy was a significant challenge, especially with variations in accents and
+					speech patterns.
+				</p>
+				<p>
+					<strong>Solution:</strong> We utilized the
+					<strong>Google Speech-to-Text API</strong>, which provides high accuracy in
+					voice recognition.
+				</p>
+
+				<h3>GraphQL Query Generation</h3>
+				<p>
+					Dynamically constructing correct GraphQL queries based on user intent and
+					available API schema required careful handling to avoid syntax errors and
+					missing parameters.
+				</p>
+				<p>
+					<strong>Solution:</strong> The <strong>Query Generator</strong> was designed to
+					use schema introspection, ensuring that only valid API queries are formed.
+				</p>
+
+				<h3>Efficient API Integration and Response Formatting</h3>
+				<p>
+					Different GraphQL APIs have varied response structures, making it challenging to
+					standardize results for the user interface.
+				</p>
+				<p>
+					<strong>Solution:</strong> We developed different templates for the results page
+					in the User Interface for every public API recognized by the Query Generator.
+				</p>
+			</section>
+
+			<section>
+				<h2 id="future-work-conclusion">8. Future Work & Conclusion</h2>
+				<p>
+					While GAIT provides a solid foundation for natural language interaction with
+					GraphQL APIs, several areas for future improvements have been identified. These
+					enhancements aim to make the platform more robust, user-friendly, and capable of
+					handling a wider range of use cases.
+				</p>
+
+				<h3>Enhanced NLP Capabilities</h3>
+				<p>
+					To improve accuracy, we aim to implement state-of-the-art machine learning
+					models, such as transformer-based architectures (e.g., BERT, GPT), to enhance
+					intent recognition. Additionally, entity extraction will be refined to better
+					identify key elements like dates, names, and locations within user queries.
+				</p>
+
+				<h3>Integration with More GraphQL APIs</h3>
+				<p>
+					We plan to expand the range of supported GraphQL APIs, including public APIs
+					such as GitHub and Shopify, as well as allowing users to configure their own API
+					endpoints dynamically. Furthermore, an API discovery feature will be introduced
+					to help users explore and integrate APIs seamlessly.
+				</p>
+
+				<h3>Performance Optimization</h3>
+				<p>
+					Optimizing query execution speed will be a key focus, including implementing
+					parallelized API requests, refining the NLU module, and leveraging caching
+					mechanisms to reduce redundant API calls.
+				</p>
+
+				<h3>Improved User Experience</h3>
+				<p>
+					Enhancing error handling by providing more informative messages and
+					troubleshooting guides will improve usability. Additionally, personalization
+					features, such as user preferences for language and theme settings, will be
+					introduced.
+				</p>
+
+				<h3>Security and Privacy Enhancements</h3>
+				<p>
+					To protect user data, we will implement end-to-end encryption for sensitive
+					information, such as user credentials and API keys.
+				</p>
+
+				<h3>Integration with Other Technologies</h3>
+				<p>
+					Future developments will include integrating GAIT with chatbot platforms like
+					Slack and Microsoft Teams, as well as extending voice command support to smart
+					assistants like Amazon Alexa and Google Assistant.
+				</p>
+			</section>
+
+			<section>
+				<h2 id="references">9. References</h2>
+				<p>
+					<strong>Backend Development References:</strong>
+				</p>
+				<ul>
+					<li>
+						Docker Documentation -
+						<a href="https://docs.docker.com/">https://docs.docker.com/</a>
+					</li>
+					<li>
+						FastAPI Documentation -
+						<a href="https://fastapi.tiangolo.com/">https://fastapi.tiangolo.com/</a>
+					</li>
+					<li>
+						GraphQL Documentation -
+						<a href="https://graphql.org/learn/">https://graphql.org/learn/</a>
+					</li>
+					<li>
+						SPARQL Query Language -
+						<a href="https://www.w3.org/TR/sparql11-query/"
+							>https://www.w3.org/TR/sparql11-query/</a
+						>
+					</li>
+					<li>
+						React Documentation -
+						<a href="https://reactjs.org/docs/getting-started.html"
+							>https://reactjs.org/docs/getting-started.html</a
+						>
+					</li>
+					<li>
+						RDFlib (RDF for Python) -
+						<a href="https://rdflib.readthedocs.io/en/stable/"
+							>https://rdflib.readthedocs.io/en/stable/</a
+						>
+					</li>
+					<li>
+						PyTorch Official Site -
+						<a href="https://pytorch.org/">https://pytorch.org/</a>
+					</li>
+					<li>
+						Langdetect (Language Detection) -
+						<a href="https://pypi.org/project/langdetect/"
+							>https://pypi.org/project/langdetect/</a
+						>
+					</li>
+					<li>
+						i18next (Internationalization in React) -
+						<a href="https://www.i18next.com/">https://www.i18next.com/</a>
+					</li>
+					<li>
+						Express.js (Node.js Framework) -
+						<a href="https://expressjs.com/">https://expressjs.com/</a>
+					</li>
+					<li>
+						Axios (HTTP Client for JavaScript) -
+						<a href="https://axios-http.com/">https://axios-http.com/</a>
+					</li>
+					<li>
+						Jest (Testing for JavaScript) -
+						<a href="https://jestjs.io/">https://jestjs.io/</a>
+					</li>
+					<li>
+						Pytest (Python Testing Framework) -
+						<a href="https://pytest.org/">https://pytest.org/</a>
+					</li>
+					<li>
+						RDFlib SPARQL Query Examples -
+						<a href="https://rdflib.readthedocs.io/en/stable/intro_to_sparql.html"
+							>https://rdflib.readthedocs.io/en/stable/intro_to_sparql.html</a
+						>
+					</li>
+					<li>
+						DeepL Translator API -
+						<a href="https://www.deepl.com/docs-api">https://www.deepl.com/docs-api</a>
+					</li>
+					<li>
+						Google Cloud Natural Language API -
+						<a href="https://cloud.google.com/natural-language"
+							>https://cloud.google.com/natural-language</a
+						>
+					</li>
+					<li>
+						OpenAI API (GPT Integration) -
+						<a href="https://platform.openai.com/docs/"
+							>https://platform.openai.com/docs/</a
+						>
+					</li>
+				</ul>
+			</section>
+		</article>
+	</body>
+</html>

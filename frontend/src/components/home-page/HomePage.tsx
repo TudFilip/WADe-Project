@@ -224,6 +224,9 @@ const HomePage = () => {
                         justifyContent: stage === 'initial' ? 'center' : 'flex-end',
                         alignItems: 'center',
                         p: 2,
+                        maxHeight: '100vh',
+                        overflow: 'hidden',
+                        overflowY: 'scroll',
                     }}
                 >
                     {stage === 'initial' ? (
