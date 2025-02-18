@@ -55,14 +55,9 @@
     -   [Environment Variables](#key-environment-variables)
 -   [Getting Started](#toolbox-getting-started)
     -   [Prerequisites](#bangbang-prerequisites)
-    -   [Installation](#gear-installation)
-    -   [Running Tests](#test_tube-running-tests)
     -   [Run Locally](#running-run-locally)
-    -   [Deployment](#triangular_flag_on_post-deployment)
 -   [Usage](#eyes-usage)
 -   [Roadmap](#compass-roadmap)
--   [Contributing](#wave-contributing)
-    -   [Code of Conduct](#scroll-code-of-conduct)
 -   [FAQ](#grey_question-faq)
 -   [License](#warning-license)
 -   [Contact](#handshake-contact)
@@ -141,8 +136,16 @@ The primary goal of the WADe Project is to democratize data access by allowing u
 
 ### :dart: Features
 
--   **User Authentication**: Secure login functionality using credentials
--   **User Authentication**
+-   **User Authentication:** Secure login functionality using encrypted credentials and session management.
+-   **Responsive Design:** Optimized for mobile, tablet, and desktop for a seamless user experience.
+-   **Natural Language Processing:** Converts plain text queries into structured API requests.
+-   **Real-Time Query Processing:** Instant feedback and dynamic updates as users interact with the system.
+-   **Multilingual Support:** Built-in internationalization with i18next, enabling multiple language options.
+-   **Dynamic Theming:** Toggle between light and dark modes to suit user preferences.
+-   **Conversation History:** Maintains a log of past queries and responses for easy reference.
+-   **Interactive Sidebar Navigation:** Intuitive sidebar to quickly access and manage previous interactions.
+-   **Containerized Deployment:** Fully Dockerized setup for consistent, scalable deployment across environments.
+-   **Robust API Integration:** Seamless connectivity with backend services including Spring Boot, PostgreSQL, Blazegraph, and NLP microservices.
 
 <!-- Color Reference -->
 
@@ -206,9 +209,9 @@ Frontend use Node.js v22.13.1 together with npm v10.9.2
 >>> 10.9.2
 ```
 
-For Java MicroService you have to install the dependencies from pom.xml file.
+For Java MicroService you have to install the dependencies from pom.xml file and have Java SDK 20 installed on your machine.
 
-For Python MicroService you have to install the desired dependencies from requirements.txt.
+For Python MicroService you have to install the desired dependencies from requirements.txt and have at least Python v3.8 installed on your machine.
 
 ```bash
 >>> pip install -r ./requirements.txt
