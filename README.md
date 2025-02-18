@@ -361,6 +361,7 @@ Resources and libraries we have used in our project.
 -   [Java Spring Boot](https://spring.io/projects/spring-boot)
 -   [React](https://react.dev/)
 -   [Vite](https://vite.dev/)
+-   [React Material UI](https://mui.com/)
 -   [Typescript](https://www.typescriptlang.org/)
 -   [Python](https://www.python.org/)
 -   [Flask](https://flask.palletsprojects.com/en/stable/)
