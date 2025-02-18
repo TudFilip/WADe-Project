@@ -145,7 +145,7 @@ The primary goal of the WADe Project is to democratize data access by allowing u
 -   **Conversation History:** Maintains a log of past queries and responses for easy reference.
 -   **Interactive Sidebar Navigation:** Intuitive sidebar to quickly access and manage previous interactions.
 -   **Containerized Deployment:** Fully Dockerized setup for consistent, scalable deployment across environments.
--   **Robust API Integration:** Seamless connectivity with backend services including Spring Boot, PostgreSQL, Blazegraph, and NLP microservices.
+-   **Robust API Integration & Intelligent Caching:** Seamlessly connects to backend services (Spring Boot, PostgreSQL, Blazegraph, and NLP microservices) with an intelligent caching mechanism. Each prompt request and its response are stored in an RDF database (Blazegraph), so if a user sends the same request again, the response is retrieved instantly from the cache.
 
 <!-- Color Reference -->
 
