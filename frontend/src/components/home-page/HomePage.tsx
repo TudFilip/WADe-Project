@@ -192,7 +192,7 @@ const HomePage = () => {
         <DynamicBackground>
             <Header toggleSidebar={toggleDrawer} />
 
-            <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+            <Box sx={{ flex: 1, display: 'flex' }}>
                 {isMobile ? (
                     <>
                         <Drawer
@@ -224,6 +224,8 @@ const HomePage = () => {
                         justifyContent: stage === 'initial' ? 'center' : 'flex-end',
                         alignItems: 'center',
                         p: 2,
+                        m: 'auto',
+                        maxHeight: '90vh',
                     }}
                 >
                     {stage === 'initial' ? (
@@ -255,6 +257,8 @@ const HomePage = () => {
                     ) : (
                         <Box
                             sx={{
+                                flexGrow: 1,
+                                overflowY: 'auto',
                                 width: '100%',
                                 maxWidth: 600,
                                 display: 'flex',

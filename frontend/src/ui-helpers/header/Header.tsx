@@ -81,44 +81,25 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
                         variant="outlined"
                         size="small"
                         sx={{
-                            display: 'flex',
-                            alignContent: 'center',
-                            justifyContent: 'center',
-                            color: 'inherit',
-                            borderColor: 'inherit',
                             marginRight: 1,
+                            // This targets the displayed value
+                            '& .MuiSelect-select': {
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            },
                             '& .MuiOutlinedInput-notchedOutline': { borderColor: 'inherit' },
                         }}
                     >
-                        <MenuItem
-                            value="ro"
-                            sx={{
-                                display: 'flex',
-                                alignContent: 'center',
-                                justifyContent: 'center',
-                            }}
-                        >
-                            <img
-                                src={romanianFlag}
-                                alt="ro-lng"
-                                width={20}
-                                loading="lazy"
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}
-                            />
+                        <MenuItem value="ro">
+                            <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                                <img src={romanianFlag} alt="ro-lng" width={20} />
+                            </Box>
                         </MenuItem>
-                        <MenuItem
-                            value="en"
-                            sx={{
-                                display: 'flex',
-                                alignContent: 'center',
-                                justifyContent: 'center',
-                            }}
-                        >
-                            <img src={englishFlag} alt="en-lng" width={20} loading="lazy" />
+                        <MenuItem value="en">
+                            <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                                <img src={englishFlag} alt="en-lng" width={20} />
+                            </Box>
                         </MenuItem>
                     </Select>
 
@@ -135,13 +116,13 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
                         <GitHub />
                     </IconButton>
 
-                    {isMobile ? (
+                    {/* {isMobile ? (
                         <IconButton color="inherit">
                             <QuestionMark />
                         </IconButton>
                     ) : (
                         <Button color="inherit">{t('TUTORIAL')}</Button>
-                    )}
+                    )} */}
 
                     {isLoggedIn && (
                         <IconButton color="inherit" onClick={handleLogout}>
