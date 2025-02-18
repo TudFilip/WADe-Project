@@ -30,7 +30,7 @@
 					<li><a href="#introduction">1. Introduction</a></li>
 					<li><a href="#related-work">2. Related Work</a></li>
 					<li><a href="#system-architecture">3. System Architecture</a></li>
-					<li>
+					<!-- <li>
 						<a href="#backend-query-services">4. Backend Query Services</a>
 					</li>
 					<li><a href="#implementation">5. Implementation</a></li>
@@ -38,7 +38,7 @@
 					<li>
 						<a href="#future-work-conclusion">7. Future Work & Conclusion</a>
 					</li>
-					<li><a href="#references">8. References</a></li>
+					<li><a href="#references">8. References</a></li> -->
 				</ol>
 			</nav>
 
@@ -237,71 +237,140 @@
 							</li>
 						</ul>
 					</li>
+
 					<li>
-						<strong>API Integration Layer:</strong> Manages requests to external GraphQL
-						APIs, ensuring efficient data retrieval and error handling.
+						<strong>API Integration Layer:</strong>
+						<ul>
+							<li>
+								<strong>External APIs:</strong>
+								WADe is designed to integrate with various APIs (e.g., GitHub
+								GraphQL API, Countries GraphQL API). The system uses GraphQL schema
+								introspection and dynamic query generation to ensure it can adapt to
+								changing schemas.
+
+								<p>Key Responsibilities:</p>
+								<ul>
+									<li>Executing the generated GraphQL (or REST) requests.</li>
+									<li>
+										Returning structured JSON responses for the requested data.
+									</li>
+									<li>
+										Allowing the user to access multiple data sources without
+										writing explicit queries.
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</li>
+
+					<li>
+						<strong>Caching & Storage:</strong>
+						<ul>
+							<li>
+								<strong>PostgreSQL:</strong>
+								Stores user credentials, session information, and any relational
+								data needed by the system.
+							</li>
+
+							<li>
+								<strong>Blazegraph (RDF Store):</strong>
+								Provides an intelligent caching mechanism. Each user prompt and
+								corresponding answer is stored as RDF triples. If the same query
+								reappears, WADe retrieves the cached response directly from
+								Blazegraph, bypassing external API calls.
+
+								<p>Key Benefits:</p>
+								<ul>
+									<li>Reduced latency for repeated queries.</li>
+									<li>
+										Ability to store metadata and relationships in a semantic
+										manner, facilitating advanced analytics or future
+										expansions.
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</li>
+
+					<li>
+						<strong>Containerization & AWS Deployment:</strong>
+						<ul>
+							<li>
+								<strong>Docker Compose:</strong>
+								Each service (Frontend, Backend, NLP microservice, Blazegraph,
+								PostgreSQL) runs in its own container. A Docker Compose file
+								orchestrates these containers, defines their networking, and sets
+								environment variables (like API credentials).
+							</li>
+
+							<li>
+								<strong>AWS EC2:</strong>
+								The containers are deployed on an Amazon EC2 instance, providing a
+								flexible and scalable hosting environment. By mapping relevant ports
+								(e.g., 3000 for frontend, 8080 for backend), external clients can
+								interact with WADe through standard HTTP endpoints.
+							</li>
+						</ul>
+					</li>
+
+					<li>
+						<strong>Data Flow Summary:</strong>
+						<ul>
+							<li>
+								<strong>User Prompt:</strong>
+								The user enters a prompt in the React/Vite UI, which sends the text
+								to the Spring Boot backend.
+							</li>
+
+							<li>
+								<strong>NLP Processing: </strong>
+								The backend optionally forwards the prompt to the Python NLP service
+								for entity extraction or language translation.
+							</li>
+							<li>
+								<strong>Query Generation: </strong>
+								Once the user’s intent is understood, the backend dynamically
+								constructs a GraphQL (or other) query.
+							</li>
+							<li>
+								<strong>Caching Check: </strong>
+								Before calling the external API, the system checks if a matching
+								prompt was recently cached in Blazegraph. If so, the stored answer
+								is returned immediately. Otherwise, the system proceeds with the
+								next step.
+							</li>
+							<li>
+								<strong>API Call: </strong>
+								If the data is not cached, the query is executed against the
+								relevant external API. The response is then returned to the backend.
+							</li>
+							<li>
+								<strong>Store & Respond:</strong>
+								The new prompt and response are stored in Blazegraph (for future
+								caching) and also logged in PostgreSQL as part of the user’s
+								history. Finally, the answer is sent back to the frontend.
+							</li>
+							<li>
+								<strong>User View:</strong>
+								The frontend displays the response in a chat-like format. The user
+								can choose to “Ask a new question,” revisit old queries, or redo a
+								past prompt.
+							</li>
+						</ul>
 					</li>
 				</ul>
 
-				<p>The GAIT system follows a structured workflow for query processing:</p>
-				<ul>
-					<li>
-						<strong>User Input Processing:</strong> Users submit queries via text or
-						voice. If voice input is used, it is converted to text using the
-						<strong>Google Speech-to-Text API</strong>.
-					</li>
-					<li>
-						<strong>Query Generation:</strong> The NLU Module extracts key information,
-						GraphQL Introspection Service retrieves API schema details, and the Query
-						Generator constructs a valid GraphQL query.
-					</li>
-					<li>
-						<strong>Data Retrieval & Response Formatting:</strong> The API Integrator
-						sends the query to the GraphQL API, retrieves results, and the Result
-						Formatter processes and displays them to the user.
-					</li>
-				</ul>
-
-				<figure>
-					<img
-						src="https://github.com/user-attachments/assets/5eb103f1-22a0-4ae3-a0e7-d54fd1d2eda5"
-						alt="System Context Diagram"
-					/>
-					<figcaption>System Context Diagram</figcaption>
-				</figure>
-
-				<figure>
-					<img
-						style="margin-left: -150px"
-						src="https://github.com/user-attachments/assets/55887eab-9de1-4750-b87d-2ad41a6dacd7"
-						alt="Container Diagram"
-					/>
-					<figcaption>Container Diagram</figcaption>
-				</figure>
-
-				<p>GAIT’s architecture provides several advantages:</p>
-				<ul>
-					<li>
-						<strong>Modular and Scalable:</strong> Supports easy integration with new
-						GraphQL APIs and NLP improvements.
-					</li>
-					<li>
-						<strong>Flexible Input Handling:</strong> Enables both text and voice-based
-						interactions for a seamless experience.
-					</li>
-					<li>
-						<strong>Efficient Query Processing:</strong> The introspection service
-						dynamically constructs accurate GraphQL queries.
-					</li>
-				</ul>
-				<p>
-					By following this architecture, GAIT provides an
-					<strong>intuitive, intelligent, and flexible</strong> way for users to interact
-					with GraphQL APIs using natural language.
+				<p></p>
+					This layered architecture provides modularity, scalability, and fault isolation.
+					Each service can be updated or replaced independently, and Docker Compose
+					ensures consistent deployments across different environments. By leveraging a
+					robust NLP pipeline, dynamic schema introspection, and RDF-based caching, WADe
+					offers a powerful, user-friendly platform for natural language interactions with
+					diverse APIs.
 				</p>
 			</section>
 
-			<section>
+			<!-- <section>
 				<h2 id="backend-query-services">4. Backend Query Services</h2>
 				<p>
 					The backend services of GAIT handle various aspects of GraphQL query processing,
@@ -1008,9 +1077,9 @@ cd YOUR_REPO.wiki"
 						</tr>
 					</tbody>
 				</table>
-			</section>
+			</section> -->
 
-			<section>
+			<!-- <section>
 				<h2 id="challenges-solutions">7. Challenges & Solutions</h2>
 				<p>Several challenges emerged during development:</p>
 				<ul>
@@ -1035,9 +1104,9 @@ cd YOUR_REPO.wiki"
 						deployment on AWS EC2 streamlined operations.
 					</li>
 				</ul>
-			</section>
+			</section> -->
 
-			<section>
+			<!-- <section>
 				<h2 id="future-work-conclusion">8. Future Work & Conclusion</h2>
 				<p>
 					The WADe Project successfully demonstrates the viability of using natural
@@ -1059,9 +1128,9 @@ cd YOUR_REPO.wiki"
 					robust, scalable architecture, the project paves the way for more accessible
 					data-driven applications.
 				</p>
-			</section>
+			</section> -->
 
-			<section>
+			<!-- <section>
 				<h2 id="references">9. References</h2>
 				<p>
 					<strong>Backend Development References:</strong>
@@ -1090,7 +1159,7 @@ cd YOUR_REPO.wiki"
 						<a href="https://aws.amazon.com/ec2/">https://aws.amazon.com/ec2/</a>
 					</li>
 				</ul>
-			</section>
+			</section> -->
 		</article>
 	</body>
 </html>
