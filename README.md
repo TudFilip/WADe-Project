@@ -82,7 +82,10 @@ The primary goal of the WADe Project is to democratize data access by allowing u
 ### :camera: Screenshots
 
 <div align="center"> 
-  <img src="https://placehold.co/600x400?text=Your+Screenshot+here" alt="screenshot" />
+  <img src="/assets/screenshots/login-page.png" alt="login-screenshot" />
+  <img src="/assets/screenshots/create-account-page.png" alt="register-screenshot" />
+  <img src="/assets/screenshots/home-page.png" alt="home-screenshot" />
+  <img src="/assets/screenshots/prompt-answer.png" alt="prompt-screenshot" />
 </div>
 
 <!-- TechStack -->
