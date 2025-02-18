@@ -113,10 +113,10 @@ The primary goal of the WADe Project is to democratize data access by allowing u
     <li><a href="https://www.typescriptlang.org/">Java</a></li>
     <li><a href="https://expressjs.com/">Spring Boot</a></li>
     <li><a href="https://go.dev/">Python</a></li>
-    <li><a href="https://go.dev/">SPARQL</a></li>
     <li><a href="https://nestjs.com/">Flask</a></li>
-    <li><a href="https://www.apollographql.com/">OpenAI</a></li>
     <li><a href="https://graphql.org/">GraphQL</a></li>
+    <li><a href="https://go.dev/">SPARQL</a></li>
+    <li><a href="https://www.apollographql.com/">OpenAI</a></li>
   </ul>
 </details>
 
@@ -148,20 +148,20 @@ The primary goal of the WADe Project is to democratize data access by allowing u
 
 ### :art: Color Reference
 
-| Color           | Hex                                                              |
-| --------------- | ---------------------------------------------------------------- |
-| Primary Color   | ![#221C35](https://via.placeholder.com/10/221C35?text=+) #221C35 |
-| Secondary Color | ![#3A2B5F](https://via.placeholder.com/10/3A2B5F?text=+) #3A2B5F |
-| Primary Color   | ![#7928CA](https://via.placeholder.com/10/7928CA?text=+) #7928CA |
-| Secondary Color | ![#a62bc5](https://via.placeholder.com/10/a62bc5?text=+) #a62bc5 |
-| Accent Color    | ![#FF0080](https://via.placeholder.com/10/FF0080?text=+) #FF0080 |
-| Text Color      | ![#221C35](https://via.placeholder.com/10/221C35?text=+) #221C35 |
+| Color           | Hex     |
+| --------------- | ------- |
+| Primary Color   | #221C35 |
+| Secondary Color | #3A2B5F |
+| Primary Color   | #7928CA |
+| Secondary Color | #a62bc5 |
+| Accent Color    | #FF0080 |
+| Text Color      | #221C35 |
 
 <!-- Env Variables -->
 
 ### :key: Environment Variables
 
-To run this project, you will need to add a few .env files. The first one should me added into Backend/Java MicroService folder:
+To run this project, you will need to add a few .env files. The first one should be added into Backend/Java MicroService folder:
 
 ```dotenv
 # Database credentials
@@ -199,11 +199,11 @@ VITE_API_PORT=8080
 Frontend use Node.js v22.13.1 together with npm v10.9.2
 
 ```bash
- >>> node --version
- >>> v22.13.1
- >>>
- >>> npm --version
- >>> 10.9.2
+>>> node --version
+>>> v22.13.1
+>>>
+>>> npm --version
+>>> 10.9.2
 ```
 
 For Java MicroService you have to install the dependencies from pom.xml file.
@@ -221,15 +221,15 @@ For Python MicroService you have to install the desired dependencies from requir
 Clone the project
 
 ```bash
-  git clone https://github.com/TudFilip/WADe-Project.git
+>>> git clone https://github.com/TudFilip/WADe-Project.git
 ```
 
 Go to each project directory:
 
 ```bash
-  cd Frontend
-  cd Backend/Java MicroService
-  cd Backend/Python MicroService
+>>> cd Frontend
+>>> cd Backend/Java MicroService
+>>> cd Backend/Python MicroService
 ```
 
 Install dependencies for each one. Be sure to have a valid OpenAI key and GitHub token and place them in the .env files as
@@ -238,14 +238,14 @@ mentioned above.
 Since this project is dockerized, in order to start it you need to have docker installed locally, together with Docker Desktop application. You can check your version of docker with this:
 
 ```bash
-  docker --version
-  docker-compose --version
+>>> docker --version
+>>> docker-compose --version
 ```
 
 If everything is set, go to the root of Backend/Java MicroService and run:
 
 ```bash
-  docker-componse up --build -d
+>>> docker-componse up --build -d
 ```
 
 After everything is set, in the Docker Desktop you should see, in Containers tab, 5 new created containers.
@@ -311,7 +311,7 @@ Here are some example queries you can try:
 -   [ ] Monitor Performance
 -   [ ] Bug Fixes and Updates
 -   [ ] Deliver the Project On Time
--   [?] Pass Current Semester
+-   [x] Pass Current Semester
 
 <!-- FAQ -->
 
